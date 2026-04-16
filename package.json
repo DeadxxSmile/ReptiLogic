@@ -9,7 +9,7 @@
     "dev:renderer": "vite --host 127.0.0.1 --port 5173",
     "dev:electron": "electron .",
     "build:renderer": "vite build",
-    "build": "npm run build:renderer && electron-builder",
+    "build": "npm run build:renderer && electron-builder --config electron-builder.json",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "postinstall": "electron-builder install-app-deps",
@@ -49,5 +49,7 @@
       "target": "nsis",
       "icon": "public/icon.ico"
     }
-  }
+  },
+  "license": "GPL-3.0",
+  "author": "Corey Eacret"
 }

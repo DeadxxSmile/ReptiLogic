@@ -1,0 +1,25 @@
+{
+  "appId": "com.reptilogic.app",
+  "productName": "ReptiLogic",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "build/**/*",
+    "src/main/**/*",
+    "node_modules/**/*",
+    "package.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "public/icon.ico",
+    "signAndEditExecutable": false,
+    "verifyUpdateCodeSignature": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}
