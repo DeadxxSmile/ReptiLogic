@@ -1,0 +1,81 @@
+.morph-library-page { max-width: 1200px; }
+
+.morph-legend {
+  display:     flex;
+  gap:         8px;
+  flex-wrap:   wrap;
+  margin-bottom: 1.25rem;
+  padding:     10px 14px;
+  background:  var(--bg-surface);
+  border:      1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.morph-group { margin-bottom: 2rem; }
+
+.morph-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.morph-card {
+  background:    var(--bg-surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding:       10px 12px;
+  cursor:        pointer;
+  transition:    all 0.12s;
+}
+
+.morph-card:hover {
+  border-color: var(--accent);
+  background:   var(--bg-elevated);
+}
+
+.morph-card-selected {
+  border-color: var(--accent);
+  background:   var(--accent-dim);
+}
+
+.morph-card-health {
+  border-color: rgba(230, 168, 23, 0.3);
+}
+
+.morph-card-header {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  margin-bottom: 4px;
+}
+
+.morph-card-name {
+  font-size:   13px;
+  font-weight: 600;
+  flex: 1;
+  overflow:    hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+}
+
+/* ── Detail overlay ──────────────────────────────────────── */
+.morph-detail-overlay {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(0,0,0,0.7);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  z-index:         100;
+  padding:         20px;
+}
+
+.morph-detail-panel {
+  max-width: 520px;
+  width:     95%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* ── Breeding detail ─────────────────────────────────────── */
+.breeding-detail-page { max-width: 1000px; }

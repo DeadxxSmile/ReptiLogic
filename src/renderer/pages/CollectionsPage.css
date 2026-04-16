@@ -1,0 +1,109 @@
+.collections-page { max-width: 1400px; }
+
+/* ── Filters bar ─────────────────────────────────────────── */
+.collections-filters {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  flex-wrap:   wrap;
+  margin-bottom: 1.25rem;
+}
+
+.filter-group {
+  display:       flex;
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow:      hidden;
+}
+
+.filter-btn {
+  padding:    6px 12px;
+  font-size:  12px;
+  font-weight: 500;
+  background: var(--bg-elevated);
+  color:      var(--text-secondary);
+  border:     none;
+  cursor:     pointer;
+  transition: all 0.12s;
+  border-right: 1px solid var(--border);
+}
+
+.filter-btn:last-child { border-right: none; }
+
+.filter-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.filter-btn.active {
+  background: var(--accent-dim);
+  color:      var(--accent-text);
+}
+
+.active-view {
+  background: var(--bg-elevated) !important;
+  color:      var(--accent-text) !important;
+}
+
+/* ── Grid ────────────────────────────────────────────────── */
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+/* ── Animal card ─────────────────────────────────────────── */
+.animal-card {
+  background:    var(--bg-surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding:       14px;
+  cursor:        pointer;
+  display:       flex;
+  gap:           12px;
+  align-items:   flex-start;
+  transition:    all 0.15s;
+}
+
+.animal-card:hover {
+  border-color: var(--border-focus);
+  background:   var(--bg-elevated);
+  transform:    translateY(-1px);
+  box-shadow:   var(--shadow-md);
+}
+
+.animal-card-photo {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.animal-card-status-overlay {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.animal-card-body { flex: 1; min-width: 0; }
+
+.animal-card-header {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  margin-bottom: 4px;
+}
+
+.animal-card-name {
+  font-weight:   600;
+  font-size:     14px;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+}
+
+.sex-dot {
+  font-size:   14px;
+  flex-shrink: 0;
+}
+
+.sex-male   { color: var(--blue-text); }
+.sex-female { color: var(--purple-text); }
+.sex-unknown{ color: var(--text-muted); }

@@ -1,0 +1,177 @@
+.add-animal-page { max-width: 1200px; }
+
+.add-animal-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .add-animal-layout { grid-template-columns: 1fr; }
+}
+
+.add-animal-main   { display: flex; flex-direction: column; gap: 16px; }
+.add-animal-morphs { min-width: 0; }
+
+/* ── Radio group ─────────────────────────────────────────── */
+.radio-group {
+  display: flex;
+  gap: 8px;
+}
+
+.radio-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.radio-btn input[type="radio"] { display: none; }
+
+.radio-btn.selected {
+  border-color: var(--border-focus);
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.radio-btn:hover:not(.selected) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Photo grid ──────────────────────────────────────────── */
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.photo-thumb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--red-dim);
+  color: var(--red-text);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-add-btn {
+  width: 80px; height: 80px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 22px;
+  transition: all 0.12s;
+}
+
+.photo-add-btn:hover { border-color: var(--accent); color: var(--accent-text); background: var(--accent-dim); }
+
+/* ── Selected morphs ─────────────────────────────────────── */
+.selected-morphs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.selected-morph-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.selected-morph-name {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+/* ── Morph picker ────────────────────────────────────────── */
+.morph-picker {}
+
+.morph-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.morph-list {
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.morph-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  width: 100%;
+  color: var(--text-primary);
+}
+
+.morph-list-item:hover { background: var(--bg-hover); }
+
+.morph-list-name {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

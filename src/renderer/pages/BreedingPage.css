@@ -1,0 +1,195 @@
+/* ── Breeding page ───────────────────────────────────────── */
+.breeding-page, .breeding-detail-page { max-width: 1100px; }
+
+.breeding-list { display: flex; flex-direction: column; gap: 12px; }
+
+.breeding-card {
+  background:    var(--bg-surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding:       16px;
+  cursor:        pointer;
+  transition:    all 0.15s;
+}
+
+.breeding-card:hover {
+  border-color: var(--border-focus);
+  background:   var(--bg-elevated);
+}
+
+.breeding-card-animals {
+  display:     flex;
+  align-items: center;
+  gap:         14px;
+  margin-bottom: 12px;
+}
+
+.breeding-card-couple {
+  flex: 1;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            2px;
+  text-align:     center;
+}
+
+.breeding-couple-name {
+  font-size:   14px;
+  font-weight: 600;
+}
+
+/* ── New pairing overlay ────────────────────────────────── */
+.new-pairing-overlay {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(0,0,0,0.7);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  z-index:         100;
+}
+
+.new-pairing-form { width: 480px; max-width: 95%; }
+
+/* ── Status pipeline ─────────────────────────────────────── */
+.status-pipeline {
+  display:     flex;
+  align-items: center;
+  gap:         0;
+  padding:     16px 20px;
+  overflow-x:  auto;
+}
+
+.pipeline-step {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            6px;
+  background:     transparent;
+  border:         none;
+  cursor:         default;
+  padding:        4px 8px;
+  border-radius:  var(--radius-md);
+  flex-shrink:    0;
+}
+
+.pipeline-step[disabled] { opacity: 0.5; }
+
+.pipeline-step:not([disabled]):hover {
+  background: var(--bg-hover);
+  cursor:     pointer;
+}
+
+.pipeline-dot {
+  width:         12px;
+  height:        12px;
+  border-radius: 50%;
+  background:    var(--bg-elevated);
+  border:        2px solid var(--border);
+  transition:    all 0.2s;
+}
+
+.pipeline-step.pipeline-complete .pipeline-dot { background: var(--accent); border-color: var(--accent); }
+.pipeline-step.pipeline-active  .pipeline-dot { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 0 3px rgba(230,168,23,0.2); }
+
+.pipeline-label {
+  font-size:  11px;
+  font-weight: 500;
+  color:      var(--text-muted);
+  text-transform: capitalize;
+}
+
+.pipeline-step.pipeline-complete .pipeline-label { color: var(--accent-text); }
+.pipeline-step.pipeline-active   .pipeline-label { color: var(--amber-text); }
+
+.pipeline-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  min-width: 20px;
+  max-width: 60px;
+  margin-bottom: 18px;
+  transition: background 0.2s;
+}
+
+.pipeline-connector.complete { background: var(--accent); }
+
+/* ── Clutch card ─────────────────────────────────────────── */
+.clutch-card { margin-bottom: 12px; }
+
+.clutch-card-header {
+  display:     flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap:         16px;
+  flex-wrap:   wrap;
+}
+
+.clutch-counts { display: flex; gap: 20px; }
+
+.clutch-stat {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            2px;
+  font-size:      11px;
+  color:          var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ── Genetics outcomes ───────────────────────────────────── */
+.calc-overlay {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(0,0,0,0.75);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  z-index:         200;
+  padding:         20px;
+  overflow-y:      auto;
+}
+
+.calc-outcomes { display: flex; flex-direction: column; gap: 6px; }
+
+.outcome-row {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+  padding:     6px 8px;
+  border-radius: var(--radius-md);
+  transition: background 0.1s;
+}
+
+.outcome-row:hover { background: var(--bg-hover); }
+
+.outcome-row.outcome-health { background: rgba(74, 56, 0, 0.15); }
+
+.outcome-pct {
+  font-size:   13px;
+  font-weight: 700;
+  min-width:   44px;
+  text-align:  right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+}
+
+.outcome-bar-wrap {
+  width:         80px;
+  height:        6px;
+  background:    var(--bg-elevated);
+  border-radius: 3px;
+  overflow:      hidden;
+  flex-shrink:   0;
+}
+
+.outcome-bar {
+  height:        100%;
+  background:    var(--accent);
+  border-radius: 3px;
+  min-width:     2px;
+  transition:    width 0.3s;
+}
+
+.outcome-label { font-size: 13px; flex: 1; }
