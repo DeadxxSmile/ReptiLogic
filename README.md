@@ -67,8 +67,8 @@ Built with **Electron**, **React**, **Vite**, and **SQLite** — all data is sto
 
 ### Prerequisites
 
-- **Node.js 22 or 24 LTS**
-- **Visual Studio 2022** with the **Desktop development with C++** workload
+- **Node.js 22 or 24 LTS** — https://nodejs.org
+- **Visual Studio 2022** with the **"Desktop development with C++"** workload
   (required to compile `better-sqlite3` for Electron)
 
 ### Install and run
@@ -80,60 +80,50 @@ npm install
 npm start
 ```
 
-`npm install` runs `electron-builder install-app-deps` automatically via the `postinstall` script so `better-sqlite3` is rebuilt against the Electron version used by the app.
+`npm install` runs `electron-builder install-app-deps` automatically via the `postinstall` script, which compiles `better-sqlite3` for your Electron version.
 
----
+If you see a **"Could not find Visual Studio"** error, the `.npmrc` in this repo sets `msvs_version=2022` which should resolve it. If the issue persists, make sure the C++ workload is installed in Visual Studio 2022 via the Visual Studio Installer.
 
-## Building a Windows installer
+### Build a distributable installer
 
 ```bash
 npm run build
 ```
 
-Output:
-
-```text
-dist/ReptiLogic Setup 0.2.0.exe
-```
-
-### If `npm run build` gets stuck or fails on `winCodeSign`
-
-This project is configured for **unsigned local Windows builds**. The build now uses a dedicated `electron-builder.json` file with `signAndEditExecutable` disabled so local packaging does not try to edit/sign the executable during the build step.
-
-If you still hit a `Cannot create symbolic link` / `A required privilege is not held by the client` error while `electron-builder` is unpacking `winCodeSign`, the fix is environmental, not a code bug:
-
-1. Turn on **Windows Developer Mode**, or
-2. Run your terminal / VS Code **as Administrator**, then retry the build.
-
-The failure in your log happened after the renderer build completed successfully and while `electron-builder` was extracting its `winCodeSign` helper archive with 7-Zip, which failed on symlink creation under a non-elevated Windows session.
+Output: `dist/ReptiLogic Setup 0.2.0.exe`
 
 ---
 
 ## Project structure
 
-```text
+```
 reptilogic/
-├── index.html
-├── vite.config.js
-├── electron-builder.json
+├── index.html                        ← Vite entry HTML
+├── vite.config.js                    ← Vite + Electron config
 ├── src/
-│   ├── index.jsx
-│   ├── main/
-│   │   ├── main.js
-│   │   ├── preload.js
+│   ├── index.jsx                     ← React app entry point
+│   ├── main/                         ← Electron main process (Node.js)
+│   │   ├── main.js                   ← Window creation, IPC registration
+│   │   ├── preload.js                ← Secure renderer ↔ main bridge
 │   │   ├── database/
-│   │   │   ├── db.js
-│   │   │   └── migrations/
+│   │   │   ├── db.js                 ← SQLite connection + auto-migration
+│   │   │   └── migrations/           ← SQL migration files (run in order)
 │   │   ├── genetics/
-│   │   │   └── calculator.js
-│   │   └── ipc/
-│   └── renderer/
-│       ├── App.jsx
-│       ├── pages/
-│       ├── components/
-│       ├── hooks/
-│       ├── utils/
-│       └── styles/
+│   │   │   └── calculator.js         ← Punnett square engine
+│   │   └── ipc/                      ← IPC handlers (one file per domain)
+│   │       ├── animalHandlers.js
+│   │       ├── breedingHandlers.js
+│   │       ├── healthHandlers.js
+│   │       ├── morphHandlers.js
+│   │       ├── utilHandlers.js
+│   │       └── exportHandlers.js
+│   └── renderer/                     ← React frontend
+│       ├── App.jsx                   ← Shell + sidebar navigation
+│       ├── pages/                    ← One file per page
+│       ├── components/               ← Shared UI components
+│       ├── hooks/                    ← Data fetching hooks
+│       ├── utils/                    ← Formatting helpers
+│       └── styles/                   ← Global CSS + design tokens
 └── public/
     └── icon.ico
 ```
@@ -142,20 +132,43 @@ reptilogic/
 
 ## Database
 
-The SQLite database is created automatically on first launch and migrations run in order. In development it lives in the project root as `reptilogic.db`. In a packaged build it is stored in the user's roaming app data folder.
+The SQLite database is created automatically on first launch and migrations run in order. In development it lives in the project root as `reptilogic.db`. In a packaged build it's stored at:
+
+```
+Windows: C:\Users\<Name>\AppData\Roaming\ReptiLogic\reptilogic.db
+```
+
+### Adding species or morphs
+
+Create a new migration file in `src/main/database/migrations/` following the existing naming pattern (e.g. `007_corn_snake_morphs.sql`). It will run automatically on next launch.
+
+---
+
+## Species supported
+
+| Species | Status |
+|---|---|
+| Ball Python | ✅ Full morph database (130+ morphs) |
+| Western Hognose | ✅ Full morph database (25+ morphs) |
+| Corn Snake | 🔧 Species entry included, morphs can be added |
+| Boa Constrictor | 🔧 Species entry included |
+| Carpet Python | 🔧 Species entry included |
+| Kenyan Sand Boa | 🔧 Species entry included |
+| Blood Python | 🔧 Species entry included |
+| + more | 🔧 Schema is fully extensible |
+
+---
+
+## Roadmap
+
+- [ ] Mobile companion app (React Native) with sync via PocketBase
+- [ ] Weight chart export to image/PDF
+- [ ] Breeding season planner with calendar view
+- [ ] Offspring kept → auto-add to collection
+- [ ] Multi-user / shared collection support
 
 ---
 
 ## License
 
-Distributed under the GNU GPL-3.0 license; please check the `LICENSE` file in the GitHub repository for more information.
-
-## Disclaimer
-
-The following is the disclaimer that applies to all scripts, functions, one-liners, etc. This disclaimer supersedes any disclaimer included in any script, function, one-liner, etc. You running this script/function means you will not blame the author(s) if this breaks your stuff. This script/function is provided **AS IS** without warranty of any kind.
-
-Author(s) disclaim all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a particular purpose. The entire risk arising out of the use or performance of the sample scripts and documentation remains with you.
-
-In no event shall author(s) be held liable for any damages whatsoever (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability to use the script or documentation. Neither this script/function, nor any part of it other than those parts that are explicitly copied from others, may be republished without author(s) express written permission.
-
-The author(s) retain the right to alter this disclaimer at any time. For the most up to date version of the disclaimer, see: https://ucunleashed.com/code-disclaimer
+MIT
