@@ -2,7 +2,7 @@
 
 > A desktop application for reptile breeders and collectors to manage their animals, track breeding seasons, calculate offspring genetics, and monitor animal health — all stored locally on your machine.
 
-[![Release](https://img.shields.io/github/v/release/DeadxxSmile/reptilogic)](https://github.com/DeadxxSmile/reptilogic/releases/latest)
+[![Release](https://img.shields.io/github/v/release/DeadxxSmile/reptilogic)](https://github.com/DeadxxSmile/reptilogic/releases/latest) 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/DeadxxSmile/reptilogic/releases/latest)
 
