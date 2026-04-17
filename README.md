@@ -1,12 +1,3 @@
-# MAJOR NOTE!!
-
-## A Note on Development:
-This app's UI and structure were generated heavily with ChatGPT, but the underlying project direction, feature planning, and the real-world keeper workflow it is built around come from hands-on use and ongoing iteration.
-
-ReptiLogic exists because most reptile keepers already have their data scattered between notes apps, spreadsheets, photos, and memory. The goal here is to pull all of that into one local desktop app that is easy to use, fast to search, and practical for real breeding and collection management.
-
-The current focus is getting a solid first public build into people's hands quickly. That means there are still rough edges, and there is absolutely room for the codebase and UI to improve over time.
-
 # ReptiLogic v1.0.0
 
 Desktop reptile collection and breeding manager built with Electron, React, Vite, and SQLite.
