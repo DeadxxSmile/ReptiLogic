@@ -5,13 +5,14 @@ import FirstRunModal from './components/FirstRunModal'
 import './styles/App.css'
 
 const NAV_ITEMS = [
-  { to: '/dashboard',  label: 'Dashboard',    icon: '🏠' },
-  { to: '/collection', label: 'Collection',   icon: '🐍' },
-  { to: '/health',     label: 'Health',       icon: '🏥' },
-  { to: '/breeding',   label: 'Breeding',     icon: '🥚' },
-  { to: '/genetics',   label: 'Genetics Calc',icon: '🧬' },
-  { to: '/morphs',     label: 'Morph Library',icon: '📖' },
-  { to: '/settings',   label: 'Settings',     icon: '⚙️'  },
+  { to: '/dashboard',  label: 'Dashboard',       icon: '🏠' },
+  { to: '/collection', label: 'Collection',      icon: '🐍' },
+  { to: '/health',     label: 'Health',          icon: '🏥' },
+  { to: '/breeding',   label: 'Breeding',        icon: '🥚' },
+  { to: '/genetics',   label: 'Genetics Calc',   icon: '🧬' },
+  { to: '/library',    label: 'Animal Library',  icon: '📚' },
+  { to: '/morphs',     label: 'Morph Library',   icon: '📖' },
+  { to: '/settings',   label: 'Settings',        icon: '⚙️'  },
 ]
 
 export default function App() {

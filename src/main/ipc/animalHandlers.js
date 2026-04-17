@@ -8,6 +8,65 @@
 const { v4: uuidv4 } = require('uuid')
 const { getDb } = require('../database/db')
 
+// ── Animal ID generation ──────────────────────────────────────────────────────
+// Format: <SpeciesCode><SexCode><Counter><MorphCode>
+// e.g. BP-M-001-AA  (Ball Python Male #001 Albino/Axanthic)
+// Species codes are 2-3 letters, sex M/F/U, counter 3 digits, morph codes optional
+
+const SPECIES_CODES = {
+  ball_python:      'BP',
+  western_hognose:  'WH',
+  corn_snake:       'CS',
+  boa_constrictor:  'BC',
+  carpet_python:    'CP',
+  burmese_python:   'BU',
+  reticulated_python: 'RP',
+  kingsnake:        'KS',
+  milk_snake:       'MS',
+  blue_tongue_skink:'BT',
+}
+
+function getSpeciesCode(speciesId) {
+  return SPECIES_CODES[speciesId] || speciesId.split('_').map(w => w[0].toUpperCase()).join('').slice(0, 3)
+}
+
+function getSexCode(sex) {
+  if (sex === 'male')   return 'M'
+  if (sex === 'female') return 'F'
+  return 'U'
+}
+
+// Build short morph abbreviation from morph names (up to 2 morphs)
+function getMorphCode(morphs) {
+  if (!morphs || !morphs.length) return ''
+  const visuals = morphs.filter(m => m.expression === 'visual' || m.expression === 'super')
+  const toCode  = morphs.slice(0, 2)
+  const code    = toCode.map(m => {
+    // Take first 1-2 letters of each word, up to 2 letters total
+    const name = m.morph_name || m.name || ''
+    return name.split(/\s+/).map(w => w[0]?.toUpperCase() || '').join('').slice(0, 2)
+  }).join('')
+  return code ? `-${code}` : ''
+}
+
+function generateAnimalId(db, speciesId, sex, morphs) {
+  const speciesCode = getSpeciesCode(speciesId)
+  const sexCode     = getSexCode(sex)
+
+  // Increment counter
+  db.prepare(`
+    INSERT INTO animal_id_counters (species_id, sex, counter)
+    VALUES (?, ?, 1)
+    ON CONFLICT(species_id, sex) DO UPDATE SET counter = counter + 1
+  `).run(speciesId, sex)
+
+  const row     = db.prepare('SELECT counter FROM animal_id_counters WHERE species_id = ? AND sex = ?').get(speciesId, sex)
+  const counter = String(row.counter).padStart(3, '0')
+  const morphCode = getMorphCode(morphs)
+
+  return `${speciesCode}${sexCode}${counter}${morphCode}`
+}
+
 function normalizeMorphExpression(expression) {
   // Older renderer builds used 'single' for a one-copy co-dominant gene.
   // The database only accepts the canonical enum values below.
@@ -24,10 +83,14 @@ function getAllAnimals() {
     SELECT
       a.*,
       s.common_name   AS species_name,
-      p.filename      AS primary_photo_filename
+      p.filename      AS primary_photo_filename,
+      fa.name         AS father_name,
+      ma.name         AS mother_name
     FROM animals a
     JOIN species s ON s.id = a.species_id
     LEFT JOIN photos p ON p.id = a.primary_photo_id
+    LEFT JOIN animals fa ON fa.id = a.father_id
+    LEFT JOIN animals ma ON ma.id = a.mother_id
     ORDER BY a.created_at DESC
   `).all()
 
@@ -62,10 +125,14 @@ function getAnimalById(id) {
       a.*,
       s.common_name   AS species_name,
       s.scientific_name,
-      p.filename      AS primary_photo_filename
+      p.filename      AS primary_photo_filename,
+      fa.name         AS father_name, fa.animal_id AS father_animal_id,
+      ma.name         AS mother_name, ma.animal_id AS mother_animal_id
     FROM animals a
     JOIN species s ON s.id = a.species_id
     LEFT JOIN photos p ON p.id = a.primary_photo_id
+    LEFT JOIN animals fa ON fa.id = a.father_id
+    LEFT JOIN animals ma ON ma.id = a.mother_id
     WHERE a.id = ?
   `).get(id)
 
@@ -135,54 +202,72 @@ function createAnimal(data) {
   const now = new Date().toISOString()
 
   const tx = db.transaction(() => {
-  const insert = db.prepare(`
-    INSERT INTO animals (
-      id, species_id, name, sex, dob, dob_estimated,
-      weight_grams, acquired_date, acquired_from,
-      acquisition_price, status, notes, created_at, updated_at
-    ) VALUES (
-      @id, @species_id, @name, @sex, @dob, @dob_estimated,
-      @weight_grams, @acquired_date, @acquired_from,
-      @acquisition_price, @status, @notes, @created_at, @updated_at
-    )
-  `)
+    // Determine animal_id
+    let animalId = data.animal_id || null
+    if (!animalId) {
+      // Check setting
+      const setting = db.prepare("SELECT value FROM app_settings WHERE key = 'animal_id_mode'").get()
+      if (!setting || setting.value === 'auto') {
+        animalId = generateAnimalId(db, data.species_id, data.sex || 'unknown', data.morphs || [])
+      }
+    }
 
-  insert.run({
-    id,
-    species_id:        data.species_id,
-    name:              data.name,
-    sex:               data.sex || 'unknown',
-    dob:               data.dob || null,
-    dob_estimated:     data.dob_estimated ? 1 : 0,
-    weight_grams:      data.weight_grams || null,
-    acquired_date:     data.acquired_date || null,
-    acquired_from:     data.acquired_from || null,
-    acquisition_price: data.acquisition_price || null,
-    status:            data.status || 'active',
-    notes:             data.notes || null,
-    created_at:        now,
-    updated_at:        now,
-  })
-
-  // Insert morph associations
-  if (data.morphs && data.morphs.length > 0) {
-    const insertMorph = db.prepare(`
-      INSERT OR IGNORE INTO animal_morphs (id, animal_id, morph_id, expression, het_percent, confirmed, notes)
-      VALUES (@id, @animal_id, @morph_id, @expression, @het_percent, @confirmed, @notes)
+    const insert = db.prepare(`
+      INSERT INTO animals (
+        id, species_id, animal_id, name, sex, dob, dob_estimated,
+        weight_grams, acquired_date, acquired_from,
+        acquisition_price, status, notes,
+        father_id, mother_id, sex_linked_maker,
+        created_at, updated_at
+      ) VALUES (
+        @id, @species_id, @animal_id, @name, @sex, @dob, @dob_estimated,
+        @weight_grams, @acquired_date, @acquired_from,
+        @acquisition_price, @status, @notes,
+        @father_id, @mother_id, @sex_linked_maker,
+        @created_at, @updated_at
+      )
     `)
 
-    for (const morph of data.morphs) {
-      insertMorph.run({
-        id:          uuidv4(),
-        animal_id:   id,
-        morph_id:    morph.morph_id,
-        expression:  normalizeMorphExpression(morph.expression),
-        het_percent: morph.het_percent || null,
-        confirmed:   morph.confirmed ? 1 : 0,
-        notes:       morph.notes || null,
-      })
+    insert.run({
+      id,
+      species_id:        data.species_id,
+      animal_id:         animalId,
+      name:              data.name,
+      sex:               data.sex || 'unknown',
+      dob:               data.dob || null,
+      dob_estimated:     data.dob_estimated ? 1 : 0,
+      weight_grams:      data.weight_grams || null,
+      acquired_date:     data.acquired_date || null,
+      acquired_from:     data.acquired_from || null,
+      acquisition_price: data.acquisition_price || null,
+      status:            data.status || 'active',
+      notes:             data.notes || null,
+      father_id:         data.father_id || null,
+      mother_id:         data.mother_id || null,
+      sex_linked_maker:  data.sex_linked_maker || null,
+      created_at:        now,
+      updated_at:        now,
+    })
+
+    // Insert morph associations
+    if (data.morphs && data.morphs.length > 0) {
+      const insertMorph = db.prepare(`
+        INSERT OR IGNORE INTO animal_morphs (id, animal_id, morph_id, expression, het_percent, confirmed, notes)
+        VALUES (@id, @animal_id, @morph_id, @expression, @het_percent, @confirmed, @notes)
+      `)
+
+      for (const morph of data.morphs) {
+        insertMorph.run({
+          id:          uuidv4(),
+          animal_id:   id,
+          morph_id:    morph.morph_id,
+          expression:  normalizeMorphExpression(morph.expression),
+          het_percent: morph.het_percent || null,
+          confirmed:   morph.confirmed ? 1 : 0,
+          notes:       morph.notes || null,
+        })
+      }
     }
-  }
 
   })
   tx()
@@ -194,6 +279,7 @@ function updateAnimal(id, data) {
 
   const update = db.prepare(`
     UPDATE animals SET
+      animal_id         = COALESCE(@animal_id, animal_id),
       name              = COALESCE(@name, name),
       sex               = COALESCE(@sex, sex),
       dob               = @dob,
@@ -207,12 +293,16 @@ function updateAnimal(id, data) {
       status_date       = @status_date,
       status_notes      = @status_notes,
       notes             = @notes,
+      father_id         = @father_id,
+      mother_id         = @mother_id,
+      sex_linked_maker  = @sex_linked_maker,
       updated_at        = @updated_at
     WHERE id = @id
   `)
 
   update.run({
     id,
+    animal_id:         data.animal_id !== undefined ? data.animal_id : null,
     name:              data.name || null,
     sex:               data.sex || null,
     dob:               data.dob !== undefined ? data.dob : undefined,
@@ -226,6 +316,9 @@ function updateAnimal(id, data) {
     status_date:       data.status_date !== undefined ? data.status_date : null,
     status_notes:      data.status_notes !== undefined ? data.status_notes : null,
     notes:             data.notes !== undefined ? data.notes : null,
+    father_id:         data.father_id !== undefined ? data.father_id : null,
+    mother_id:         data.mother_id !== undefined ? data.mother_id : null,
+    sex_linked_maker:  data.sex_linked_maker !== undefined ? data.sex_linked_maker : null,
     updated_at:        new Date().toISOString(),
   })
 
@@ -271,6 +364,47 @@ function register(ipcMain) {
   ipcMain.handle('animals:update',     (_, id, data) => updateAnimal(id, data))
   ipcMain.handle('animals:delete',     (_, id)     => deleteAnimal(id))
   ipcMain.handle('animals:getHistory', (_, id)     => getAnimalHistory(id))
+
+  // Generate a preview of what the auto ID would be (without incrementing counter)
+  ipcMain.handle('animals:previewId', (_, speciesId, sex, morphs) => {
+    const db = getDb()
+    const speciesCode = getSpeciesCode(speciesId)
+    const sexCode     = getSexCode(sex)
+    const row = db.prepare('SELECT counter FROM animal_id_counters WHERE species_id = ? AND sex = ?').get(speciesId, sex)
+    const nextCounter = String((row?.counter || 0) + 1).padStart(3, '0')
+    const morphCode   = getMorphCode(morphs || [])
+    return `${speciesCode}${sexCode}${nextCounter}${morphCode}`
+  })
+
+  // Get full ancestry chain for lineage view
+  ipcMain.handle('animals:getLineage', (_, id) => {
+    const db = getDb()
+    const visited = new Set()
+
+    function fetchNode(animalId, depth) {
+      if (!animalId || visited.has(animalId) || depth > 5) return null
+      visited.add(animalId)
+      const a = db.prepare(`
+        SELECT a.id, a.name, a.animal_id, a.sex, a.species_id, a.dob,
+               a.father_id, a.mother_id, s.common_name AS species_name,
+               GROUP_CONCAT(m.name, ', ') AS morph_summary
+        FROM animals a
+        JOIN species s ON s.id = a.species_id
+        LEFT JOIN animal_morphs am ON am.animal_id = a.id AND am.expression = 'visual'
+        LEFT JOIN morphs m ON m.id = am.morph_id
+        WHERE a.id = ?
+        GROUP BY a.id
+      `).get(animalId)
+      if (!a) return null
+      return {
+        ...a,
+        father: fetchNode(a.father_id, depth + 1),
+        mother: fetchNode(a.mother_id, depth + 1),
+      }
+    }
+
+    return fetchNode(id, 0)
+  })
 
   // Species list (used in forms)
   ipcMain.handle('species:getAll', () => {

@@ -134,3 +134,47 @@
   flex-wrap:       wrap;
 }
 .frm-step--center .frm-actions { justify-content: center; }
+
+/* ── Backup step additions ─────────────────────────────────────────────────── */
+.frm-backup-toggle {
+  margin: 16px 0 12px;
+}
+.frm-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.frm-toggle-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.frm-backup-config {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+.frm-backup-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.frm-backup-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  width: 110px;
+  flex-shrink: 0;
+}
+
+/* ── Wide variant for settings modals ─────────────────────────────────────── */
+.frm-modal--wide {
+  max-width: 720px;
+  width: 90vw;
+}

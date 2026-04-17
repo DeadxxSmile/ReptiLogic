@@ -230,11 +230,11 @@ function importCollectionCsv(filePath) {
 
   const insertAnimal = db.prepare(`
     INSERT INTO animals (
-      id, species_id, name, sex, dob, dob_estimated,
+      id, species_id, animal_id, name, sex, dob, dob_estimated,
       weight_grams, acquired_date, acquired_from,
       acquisition_price, status, notes, created_at, updated_at
     ) VALUES (
-      @id, @species_id, @name, @sex, @dob, @dob_estimated,
+      @id, @species_id, @animal_id, @name, @sex, @dob, @dob_estimated,
       @weight_grams, @acquired_date, @acquired_from,
       @acquisition_price, @status, @notes, @created_at, @updated_at
     )
@@ -268,9 +268,22 @@ function importCollectionCsv(filePath) {
 
       const id = uuidv4()
       const now = new Date().toISOString()
+
+      // Handle animal_id — if provided use it, else auto-generate
+      let animalId = normalizeText(row.animal_id)
+      if (!animalId) {
+        // Auto-generate using same logic as backend handler
+        const speciesCode = speciesId.split('_').map(w => w[0]?.toUpperCase() || '').join('').slice(0, 3)
+        const sexCode = normalizeSex(row.sex) === 'male' ? 'M' : normalizeSex(row.sex) === 'female' ? 'F' : 'U'
+        db.prepare(`INSERT INTO animal_id_counters (species_id, sex, counter) VALUES (?,?,1) ON CONFLICT(species_id,sex) DO UPDATE SET counter=counter+1`).run(speciesId, normalizeSex(row.sex))
+        const cRow = db.prepare('SELECT counter FROM animal_id_counters WHERE species_id=? AND sex=?').get(speciesId, normalizeSex(row.sex))
+        animalId = `${speciesCode}${sexCode}${String(cRow?.counter || 1).padStart(3, '0')}`
+      }
+
       insertAnimal.run({
         id,
         species_id: speciesId,
+        animal_id:  animalId,
         name,
         sex: normalizeSex(row.sex),
         dob: normalizeDate(row.dob),
@@ -425,6 +438,9 @@ function importMorphsCsv(filePath) {
         category: normalizeText(row.category),
         inheritance_type: inheritanceType,
         super_form_name: normalizeText(row.super_form_name),
+        allele_group_id: normalizeText(row.allele_group || row.allele_group_id),
+        cross_allele_result: normalizeText(row.cross_allele_result),
+        is_sex_linked: parseBoolean(row.is_sex_linked) ? 1 : 0,
         has_health_concern: parseBoolean(row.has_health_concern) ? 1 : 0,
         health_concern_desc: normalizeText(row.health_concern_desc),
         description: normalizeText(row.description),
@@ -443,6 +459,9 @@ function importMorphsCsv(filePath) {
             category = @category,
             inheritance_type = @inheritance_type,
             super_form_name = @super_form_name,
+            allele_group_id = @allele_group_id,
+            cross_allele_result = @cross_allele_result,
+            is_sex_linked = @is_sex_linked,
             has_health_concern = @has_health_concern,
             health_concern_desc = @health_concern_desc,
             description = @description,
@@ -459,11 +478,13 @@ function importMorphsCsv(filePath) {
         db.prepare(`
           INSERT INTO morphs (
             id, species_id, name, gene_symbol, category, inheritance_type,
-            super_form_name, has_health_concern, health_concern_desc, description,
+            super_form_name, allele_group_id, cross_allele_result, is_sex_linked,
+            has_health_concern, health_concern_desc, description,
             also_known_as, discovered_year, is_combo, combo_components, sort_order, is_user_created
           ) VALUES (
             @id, @species_id, @name, @gene_symbol, @category, @inheritance_type,
-            @super_form_name, @has_health_concern, @health_concern_desc, @description,
+            @super_form_name, @allele_group_id, @cross_allele_result, @is_sex_linked,
+            @has_health_concern, @health_concern_desc, @description,
             @also_known_as, @discovered_year, @is_combo, @combo_components, @sort_order, 1
           )
         `).run({ ...payload, id: uuidv4() })
@@ -527,8 +548,12 @@ function registerExportHandlers(ipcMain, dialog) {
   ipcMain.handle('export:collectionCsv', (_, folderPath) => {
     const db = getDb()
     const animals = db.prepare(`
-      SELECT a.*, s.common_name AS species_name
-      FROM animals a JOIN species s ON s.id = a.species_id
+      SELECT a.*, s.common_name AS species_name,
+             fa.name AS father_name, ma.name AS mother_name
+      FROM animals a
+      JOIN species s ON s.id = a.species_id
+      LEFT JOIN animals fa ON fa.id = a.father_id
+      LEFT JOIN animals ma ON ma.id = a.mother_id
       ORDER BY s.common_name, a.name
     `).all()
 
@@ -551,19 +576,22 @@ function registerExportHandlers(ipcMain, dialog) {
     }
 
     const columns = [
-      { label: 'Name', key: 'name' },
-      { label: 'Species', key: 'species_name' },
-      { label: 'Sex', key: 'sex' },
-      { label: 'DOB', key: 'dob' },
+      { label: 'Animal ID',     key: 'animal_id' },
+      { label: 'Name',          key: 'name' },
+      { label: 'Species',       key: 'species_name' },
+      { label: 'Sex',           key: 'sex' },
+      { label: 'DOB',           key: 'dob' },
       { label: 'DOB Estimated', value: r => r.dob_estimated ? 'Yes' : 'No' },
-      { label: 'Weight (g)', key: 'weight_grams' },
-      { label: 'Status', key: 'status' },
+      { label: 'Weight (g)',    key: 'weight_grams' },
+      { label: 'Status',        key: 'status' },
       { label: 'Acquired Date', key: 'acquired_date' },
       { label: 'Acquired From', key: 'acquired_from' },
-      { label: 'Purchase Price', key: 'acquisition_price' },
-      { label: 'Morphs', key: 'morphs_summary' },
-      { label: 'Notes', key: 'notes' },
-      { label: 'Added', key: 'created_at' },
+      { label: 'Purchase Price',key: 'acquisition_price' },
+      { label: 'Father Name',   key: 'father_name' },
+      { label: 'Mother Name',   key: 'mother_name' },
+      { label: 'Morphs',        key: 'morphs_summary' },
+      { label: 'Notes',         key: 'notes' },
+      { label: 'Added',         key: 'created_at' },
     ]
 
     const file = writeCsv(folderPath, 'collection.csv', toCsv(animals, columns))
@@ -613,21 +641,24 @@ function registerExportHandlers(ipcMain, dialog) {
     `).all()
 
     const columns = [
-      { label: 'Name', key: 'name' },
-      { label: 'Species', key: 'species_name' },
-      { label: 'Gene Symbol', key: 'gene_symbol' },
-      { label: 'Category', key: 'category' },
-      { label: 'Inheritance Type', key: 'inheritance_type' },
-      { label: 'Super Form Name', key: 'super_form_name' },
+      { label: 'Name',               key: 'name' },
+      { label: 'Species',            key: 'species_name' },
+      { label: 'Gene Symbol',        key: 'gene_symbol' },
+      { label: 'Category',           key: 'category' },
+      { label: 'Inheritance Type',   key: 'inheritance_type' },
+      { label: 'Super Form Name',    key: 'super_form_name' },
+      { label: 'Is Sex Linked',      value: r => r.is_sex_linked ? 'Yes' : 'No' },
+      { label: 'Allele Group',       key: 'allele_group_id' },
+      { label: 'Cross Allele Result', key: 'cross_allele_result' },
       { label: 'Has Health Concern', value: r => r.has_health_concern ? 'Yes' : 'No' },
       { label: 'Health Concern Desc', key: 'health_concern_desc' },
-      { label: 'Description', key: 'description' },
-      { label: 'Also Known As', key: 'also_known_as' },
-      { label: 'Discovered Year', key: 'discovered_year' },
-      { label: 'Is Combo', value: r => r.is_combo ? 'Yes' : 'No' },
-      { label: 'Combo Components', key: 'combo_components' },
-      { label: 'Sort Order', key: 'sort_order' },
-      { label: 'User Created', value: r => r.is_user_created ? 'Yes' : 'No' },
+      { label: 'Description',        key: 'description' },
+      { label: 'Also Known As',      key: 'also_known_as' },
+      { label: 'Discovered Year',    key: 'discovered_year' },
+      { label: 'Is Combo',           value: r => r.is_combo ? 'Yes' : 'No' },
+      { label: 'Combo Components',   key: 'combo_components' },
+      { label: 'Sort Order',         key: 'sort_order' },
+      { label: 'User Created',       value: r => r.is_user_created ? 'Yes' : 'No' },
     ]
 
     const file = writeCsv(folderPath, 'morphs.csv', toCsv(rows, columns))
@@ -695,6 +726,38 @@ function registerSettingsHandlers(ipcMain) {
   ipcMain.handle('settings:set', (_, key, value) => {
     const db = getDb()
     const now = new Date().toISOString()
+
+    // Intercept species upsert (from Animal Library page)
+    if (key === '_species_upsert') {
+      try {
+        const data = JSON.parse(value)
+        db.prepare(`
+          INSERT INTO species (
+            id, common_name, scientific_name, gives_live_birth,
+            avg_clutch_size, litter_size_min, litter_size_max,
+            incubation_days_min, incubation_days_max, notes, created_at
+          ) VALUES (
+            @id, @common_name, @scientific_name, @gives_live_birth,
+            @avg_clutch_size, @litter_size_min, @litter_size_max,
+            @incubation_days_min, @incubation_days_max, @notes, @created_at
+          )
+          ON CONFLICT(id) DO UPDATE SET
+            common_name         = excluded.common_name,
+            scientific_name     = excluded.scientific_name,
+            gives_live_birth    = excluded.gives_live_birth,
+            avg_clutch_size     = excluded.avg_clutch_size,
+            litter_size_min     = excluded.litter_size_min,
+            litter_size_max     = excluded.litter_size_max,
+            incubation_days_min = excluded.incubation_days_min,
+            incubation_days_max = excluded.incubation_days_max,
+            notes               = excluded.notes
+        `).run({ ...data, created_at: now })
+        return { success: true }
+      } catch (e) {
+        return { success: false, error: e.message }
+      }
+    }
+
     db.prepare(`
       INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at

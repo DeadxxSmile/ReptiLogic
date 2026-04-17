@@ -66,42 +66,105 @@
 
 .calc-result-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 10px;
+  margin-bottom: 4px;
 }
 
 .outcome-card {
-  background:    var(--bg-elevated);
-  border:        1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding:       12px 14px;
-  display:       flex;
+  background:     var(--bg-elevated);
+  border:         1px solid var(--border);
+  border-radius:  var(--radius-lg);
+  padding:        16px 18px;
+  display:        flex;
   flex-direction: column;
-  gap:           4px;
-  transition:    border-color 0.15s;
+  gap:            3px;
+  transition:     border-color 0.15s, transform 0.1s;
 }
 
-.outcome-card:hover { border-color: var(--accent); }
+.outcome-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
 
 .outcome-card-health {
-  border-color: rgba(230, 168, 23, 0.3);
+  border-color: rgba(230, 168, 23, 0.4);
   background:   rgba(74, 56, 0, 0.15);
 }
 
 .outcome-card-pct {
-  font-size:   22px;
-  font-weight: 700;
+  font-size:   28px;
+  font-weight: 800;
   color:       var(--accent-text);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 2px;
 }
 
 .outcome-card-label {
-  font-size:  13px;
-  font-weight: 500;
-  line-height: 1.4;
+  font-size:   14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color:       var(--text-primary);
+}
+
+/* ── Clutch inline count ──────────────────────────────────── */
+.outcome-card-clutch {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.outcome-card-clutch span {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.outcome-card-clutch-range {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+/* ── Variants ─────────────────────────────────────────────── */
+.outcome-card-complex {
+  border-color: var(--accent);
+  background:   var(--accent-dim);
+}
+
+.outcome-card-complex .outcome-card-pct {
+  color: var(--accent-text);
+}
+
+.outcome-card-normal {
+  opacity: 0.7;
+}
+
+.outcome-card-normal .outcome-card-pct {
+  color: var(--text-muted);
+}
+
+.outcome-card-badge {
+  font-size:   10px;
+  font-weight: 700;
+  color:       var(--accent-text);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.outcome-card-complex .outcome-card-badge {
+  color: var(--accent-text);
 }
 
 .outcome-card-warning {
-  font-size: 11px;
-  color:     var(--amber-text);
+  font-size:  11px;
+  color:      var(--amber-text);
+  margin-top: 2px;
 }

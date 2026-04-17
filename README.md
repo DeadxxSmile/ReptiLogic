@@ -12,11 +12,11 @@
 
 Download the latest installer from the [Releases page](https://github.com/DeadxxSmile/reptilogic/releases/latest).
 
-1. Download `ReptiLogic-Setup-1.0.0.exe`
+1. Download `ReptiLogic-Setup-1.1.0.exe`
 2. Run the installer — choose your install location and create shortcuts
-3. Launch ReptiLogic — your database is created automatically on first run
+3. Launch ReptiLogic — the first-run wizard will guide you through setup
 
-No additional software required for the installed version.
+No additional software required.
 
 ---
 
@@ -24,53 +24,61 @@ No additional software required for the installed version.
 
 ### 🐍 Collection
 - Track every animal with photos, morphs/genes, weight, DOB, acquisition info, and notes
-- Grid and list views with filtering by species, sex, and status
+- **Auto-generated Animal IDs** — species + sex + counter + morph abbreviation (e.g. `BPF042-AhA`), or enter your own
+- Grid and list views with filtering by species, sex, status, and search
 - Full per-animal history — breeding records, weight log, feeding log, photo gallery
-- Capture health information at intake when adding a new animal
+
+### 🌳 Lineage Tracking
+- Link every animal to its sire and dam when adding or editing
+- **Lineage tab** on each animal — clickable family tree going back as many generations as recorded
+- 2-generation pedigree block in husbandry print reports
 
 ### 🏥 Health
 - Per-animal health dashboard with weight trend charts
-- Log health issues with category (respiratory, parasite, injury, etc.) and severity level
-- Track current and past medications — dosage, frequency, and route
-- Record vet visits with diagnosis, treatment, cost, and follow-up dates
-- Dashboard care reminders for animals overdue on feeding or weighing (thresholds configurable)
+- Log health issues with category and severity, track medications, record vet visits
+- Dashboard reminders for animals overdue on feeding or weighing
 
 ### 🥚 Breeding
-- Full pairing lifecycle: Planned → Active → Gravid → Laid → Hatching → Hatched
-- Track lock dates, ovulation, pre-lay shed, and pairing counts
-- Clutch logging — egg count, slug count, hatch count, incubation temp and humidity
-- Individual offspring tracker with sex, hatch weight, disposition, and sale info
-- Suggested pairings engine based on complementary genetics across your active collection
+- Full pairing lifecycle: Planned → Active → Gravid → Laid → Hatched
+- Track lock dates, ovulation, pre-lay shed, pairing counts
+- **Live-birth species support** — terminology switches automatically (Young/Stillborn/Born vs Eggs/Slugs/Hatched)
+- **Add Babies Wizard** — step through each hatchling, set sex/weight/morphs/ID, add them all to your collection at once with parents auto-linked
 
 ### 🧬 Genetics Calculator
-- Full Punnett square engine — recessive, co-dominant, dominant, and line-bred genes
-- Multi-gene calculations with accurate probabilities for every possible outcome
-- Automatic health warnings for morphs with known concerns (e.g. Spider wobble)
-- Use animals directly from your collection or enter genes manually
+- Full Punnett square engine — recessive, co-dominant, dominant, line-bred, and **sex-linked** genes
+- **Allele complex support** — BEL complex (Lesser, Butter, Mojave, Phantom, Mystic, Russo, Special, Mocha), Yellow Belly complex, 8-Ball complex, Bearded Dragon Scale complex, and more. Any two alleles from the same group produce the correct cross-allele result (e.g. Lesser × Mojave = BEL)
+- **Sex-linked Banana/Coral Glow** — Male Maker and Female Maker inheritance modelled correctly (~93% sex ratio skew in Banana offspring)
+- Outcome cards showing morph name, probability, expected clutch count per outcome, and sex ratio notes where applicable
+- Clutch size projection based on species typical range
+- Health warnings for all morphs with known concerns
+- Use animals from your collection or enter genes manually
 
-### 📖 Morph Library
-- 130+ ball python morphs and 25+ western hognose morphs built in
-- Add your own custom morphs for any species
-- Searchable and filterable reference used automatically by the genetics calculator
+### 📚 Animal & Morph Library
+- **4 species with full morph databases:** Ball Python (130+ morphs), Western Hognose (25+ morphs), Leopard Gecko (18 morphs), Bearded Dragon (14 morphs)
+- All morphs include correct inheritance type, health concerns, super form names, and allele group assignments
+- Add custom species and custom morphs for any species
 
-### ⚙️ Settings, Export & Import
-- Export collection, breeding records, and health records to CSV
-- Full database backup (.db file) and restore
-- Import collection from CSV using the included template
-- Configurable feeding and weighing reminder thresholds
+### 🖨️ Husbandry Print Reports
+- Professional PDF-ready document per animal — photo, morphs, lineage, weight log, feeding history
+- Breeder profile header with name, logo, website, and social links
+
+### 💾 Backup & Data
+- Automatic compressed zip backups on open or close, with configurable retention
+- One-click restore from any saved backup
+- CSV export for collection, breeding records, and morphs
+- CSV import with auto format detection
 
 ---
 
-## 📦 Getting the installer
+## 🚀 First Run
 
-Head to the [**Releases page**](https://github.com/DeadxxSmile/reptilogic/releases/latest) and download the `.exe` from the latest release. Run it and follow the installer wizard — it will ask where to install and optionally create desktop and Start Menu shortcuts.
+The setup wizard walks you through database location, automatic backups, and app preferences. All settings are adjustable later.
 
 ---
 
 ## 🛠️ Building from Source
 
 ### Prerequisites
-
 - **Node.js 22 or 24 LTS** — https://nodejs.org
 - **Visual Studio 2022** with the **"Desktop development with C++"** workload
 
@@ -83,19 +91,13 @@ npm install
 npm start
 ```
 
-`npm install` automatically compiles `better-sqlite3` for your Electron version via the `postinstall` script.
-
-> **VS2022 detection issues?** The `.npmrc` sets `msvs_version=2022`. If you still get a gyp error, open **Visual Studio Installer → Modify** and confirm the **"Desktop development with C++"** workload is installed.
-
 ### Build the installer
 
 ```bash
 npm run build
 ```
 
-Output: `dist/ReptiLogic-Setup-1.0.0.exe`
-
-> **Unsigned local builds on Windows:** If the build fails extracting `winCodeSign`, enable **Windows Developer Mode** (`Settings → Privacy & Security → Developer Mode`) or run your terminal as Administrator.
+Output: `dist/ReptiLogic-Setup-1.1.0.exe`
 
 ### Scripts
 
@@ -103,8 +105,8 @@ Output: `dist/ReptiLogic-Setup-1.0.0.exe`
 |---|---|
 | `npm start` | Run in development mode |
 | `npm run build` | Build distributable installer |
-| `npm run rebuild` | Manually recompile native modules |
-| `npm run clean` | Wipe `node_modules`, `dist`, `build`, `.vite`, `package-lock.json` |
+| `npm run rebuild` | Recompile native modules |
+| `npm run clean` | Wipe build artifacts and node_modules |
 
 ---
 
@@ -113,57 +115,38 @@ Output: `dist/ReptiLogic-Setup-1.0.0.exe`
 ```
 reptilogic/
 ├── resources/
-│   ├── art/                     ← App icons (.ico and .png)
-│   └── templates/               ← collection-import-template.csv
+│   ├── art/                     ← App icons
+│   └── templates/               ← CSV import template
 ├── src/
-│   ├── index.jsx                ← React entry point
+│   ├── index.jsx                ← React entry + router
 │   ├── main/                    ← Electron main process
-│   │   ├── main.js              ← Window creation, IPC registration
-│   │   ├── preload.js           ← Renderer ↔ main bridge
+│   │   ├── main.js
+│   │   ├── preload.js
 │   │   ├── database/
-│   │   │   ├── db.js            ← SQLite init + auto-migration runner
-│   │   │   └── migrations/      ← SQL files, applied in order on launch
+│   │   │   ├── db.js            ← SQLite init + auto-migration
+│   │   │   └── migrations/      ← SQL files applied in order on launch
 │   │   ├── genetics/
-│   │   │   └── calculator.js    ← Punnett square engine
-│   │   └── ipc/                 ← IPC handlers, one file per domain
+│   │   │   └── calculator.js    ← Punnett square + allele complex engine
+│   │   └── ipc/                 ← IPC handlers by domain
 │   └── renderer/                ← React frontend
-│       ├── App.jsx              ← Shell + sidebar + custom title bar
+│       ├── App.jsx
 │       ├── pages/
 │       ├── components/
 │       ├── hooks/
 │       ├── utils/
 │       └── styles/
-└── public/                      ← Static assets
-```
-
----
-
-## 📋 Collection CSV Import
-
-The importer helps migrate an existing spreadsheet without re-entering every animal. Download the template via **Settings → Export → CSV Template**, fill it in, then import via **Settings → Import → Collection CSV**.
-
-**Supported columns:** Name, Species, Sex, DOB, DOB Estimated, Weight (g), Status, Acquired Date, Acquired From, Purchase Price, Morphs, Notes
-
-**Morph format examples:**
-```
-Clown
-Het Pied
-50% Poss Het Lavender
-Proven Het Albino
-Super Pastel
-Pastel, Het Pied
+└── public/
 ```
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Mobile companion app (iOS/Android) with local network sync
-- [ ] Offspring kept → auto-add to collection
+- [ ] Mobile companion / local network web access
 - [ ] Breeding season calendar view
+- [ ] Additional species morph databases (corn snake, boa)
+- [ ] Sale and customer tracking
 - [ ] Weight chart image export
-- [ ] Additional species morph databases (corn snake, boa, carpet python)
-- [ ] Multi-collection / shared collection support
 
 ---
 
@@ -185,4 +168,4 @@ GNU GPL-3.0 — see [`LICENSE`](LICENSE) for details.
 
 ## ⚠️ Disclaimer
 
-This software is provided **AS IS** without warranty of any kind. The author(s) shall not be held liable for any damages arising from its use.
+Provided **AS IS** without warranty of any kind.

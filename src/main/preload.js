@@ -12,12 +12,14 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   animals: {
-    getAll:     ()            => ipcRenderer.invoke('animals:getAll'),
-    getById:    (id)          => ipcRenderer.invoke('animals:getById', id),
-    create:     (data)        => ipcRenderer.invoke('animals:create', data),
-    update:     (id, data)    => ipcRenderer.invoke('animals:update', id, data),
-    delete:     (id)          => ipcRenderer.invoke('animals:delete', id),
-    getHistory: (id)          => ipcRenderer.invoke('animals:getHistory', id),
+    getAll:         ()                   => ipcRenderer.invoke('animals:getAll'),
+    getById:        (id)                 => ipcRenderer.invoke('animals:getById', id),
+    create:         (data)               => ipcRenderer.invoke('animals:create', data),
+    update:         (id, data)           => ipcRenderer.invoke('animals:update', id, data),
+    delete:         (id)                 => ipcRenderer.invoke('animals:delete', id),
+    getHistory:     (id)                 => ipcRenderer.invoke('animals:getHistory', id),
+    previewId:      (sp, sex, morphs)    => ipcRenderer.invoke('animals:previewId', sp, sex, morphs),
+    getLineage:     (id)                 => ipcRenderer.invoke('animals:getLineage', id),
   },
 
   species: {
@@ -29,8 +31,8 @@ contextBridge.exposeInMainWorld('api', {
     getAll:        ()          => ipcRenderer.invoke('morphs:getAll'),
     search:        (query)     => ipcRenderer.invoke('morphs:search', query),
     getCategories: (speciesId) => ipcRenderer.invoke('morphs:getCategories', speciesId),
-    create:   (data) => ipcRenderer.invoke('morphs:create', data),
-    getCount: ()     => ipcRenderer.invoke('morphs:getCount'),
+    create:        (data)      => ipcRenderer.invoke('morphs:create', data),
+    getCount:      ()          => ipcRenderer.invoke('morphs:getCount'),
   },
 
   breeding: {
@@ -52,10 +54,11 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   offspring: {
-    getByClutch: (clutchId)       => ipcRenderer.invoke('offspring:getByClutch', clutchId),
-    add:         (clutchId, data) => ipcRenderer.invoke('offspring:add', clutchId, data),
-    update:      (id, data)       => ipcRenderer.invoke('offspring:update', id, data),
-    delete:      (id)             => ipcRenderer.invoke('offspring:delete', id),
+    getByClutch:     (clutchId)               => ipcRenderer.invoke('offspring:getByClutch', clutchId),
+    add:             (clutchId, data)          => ipcRenderer.invoke('offspring:add', clutchId, data),
+    update:          (id, data)                => ipcRenderer.invoke('offspring:update', id, data),
+    delete:          (id)                      => ipcRenderer.invoke('offspring:delete', id),
+    addToCollection: (offspringId, animalData) => ipcRenderer.invoke('offspring:addToCollection', offspringId, animalData),
   },
 
   photos: {
@@ -87,34 +90,49 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   genetics: {
-    calculate: (maleGenes, femaleGenes) => ipcRenderer.invoke('genetics:calculate', maleGenes, femaleGenes),
+    calculate: (maleGenes, femaleGenes, speciesId) => ipcRenderer.invoke('genetics:calculate', maleGenes, femaleGenes, speciesId),
   },
 
   export: {
-    chooseFolder:  ()           => ipcRenderer.invoke('export:chooseFolder'),
-    collectionCsv: (folderPath) => ipcRenderer.invoke('export:collectionCsv', folderPath),
-    breedingCsv:   (folderPath) => ipcRenderer.invoke('export:breedingCsv', folderPath),
-    morphsCsv:     (folderPath) => ipcRenderer.invoke('export:morphsCsv', folderPath),
-    fullBackup:    (folderPath) => ipcRenderer.invoke('export:fullBackup', folderPath),
+    chooseFolder:      ()           => ipcRenderer.invoke('export:chooseFolder'),
+    collectionCsv:     (folderPath) => ipcRenderer.invoke('export:collectionCsv', folderPath),
+    breedingCsv:       (folderPath) => ipcRenderer.invoke('export:breedingCsv', folderPath),
+    morphsCsv:         (folderPath) => ipcRenderer.invoke('export:morphsCsv', folderPath),
+    fullBackup:        (folderPath) => ipcRenderer.invoke('export:fullBackup', folderPath),
     importTemplateCsv: (folderPath) => ipcRenderer.invoke('export:importTemplateCsv', folderPath),
   },
 
   importData: {
-    chooseCsvFile: () => ipcRenderer.invoke('import:chooseCsvFile'),
-    chooseImportFile: () => ipcRenderer.invoke('import:chooseImportFile'),
-    collectionCsv: (filePath) => ipcRenderer.invoke('import:collectionCsv', filePath),
-    breedingCsv: (filePath) => ipcRenderer.invoke('import:breedingCsv', filePath),
-    morphsCsv: (filePath) => ipcRenderer.invoke('import:morphsCsv', filePath),
-    restoreAny: (filePath) => ipcRenderer.invoke('import:restoreAny', filePath),
-    fullBackup: (filePath) => ipcRenderer.invoke('import:fullBackup', filePath),
+    chooseCsvFile:    ()         => ipcRenderer.invoke('import:chooseCsvFile'),
+    chooseImportFile: ()         => ipcRenderer.invoke('import:chooseImportFile'),
+    collectionCsv:    (filePath) => ipcRenderer.invoke('import:collectionCsv', filePath),
+    breedingCsv:      (filePath) => ipcRenderer.invoke('import:breedingCsv', filePath),
+    morphsCsv:        (filePath) => ipcRenderer.invoke('import:morphsCsv', filePath),
+    restoreAny:       (filePath) => ipcRenderer.invoke('import:restoreAny', filePath),
+    fullBackup:       (filePath) => ipcRenderer.invoke('import:fullBackup', filePath),
+  },
+
+  backup: {
+    run:          ()        => ipcRenderer.invoke('backup:run'),
+    runToFolder:  (folder)  => ipcRenderer.invoke('backup:runToFolder', folder),
+    chooseFolder: ()        => ipcRenderer.invoke('backup:chooseFolder'),
+    chooseFile:   ()        => ipcRenderer.invoke('backup:chooseFile'),
+    list:         (folder)  => ipcRenderer.invoke('backup:list', folder),
+    restore:      (zipPath) => ipcRenderer.invoke('backup:restore', zipPath),
+  },
+
+  print: {
+    husbandryReport: (animalId) => ipcRenderer.invoke('print:husbandryReport', animalId),
+    chooseLogo:      ()         => ipcRenderer.invoke('print:chooseLogo'),
+    getLogoDataUrl:  ()         => ipcRenderer.invoke('print:getLogoDataUrl'),
   },
 
   db: {
-    getPath:          ()          => ipcRenderer.invoke('db:getPath'),
-    chooseFolder:     ()          => ipcRenderer.invoke('db:chooseFolder'),
-    setPath:          (newFolder) => ipcRenderer.invoke('db:setPath', newFolder),
-    isFirstRun:       ()          => ipcRenderer.invoke('db:isFirstRun'),
-    markNotFirstRun:  ()          => ipcRenderer.invoke('db:markNotFirstRun'),
+    getPath:         ()          => ipcRenderer.invoke('db:getPath'),
+    chooseFolder:    ()          => ipcRenderer.invoke('db:chooseFolder'),
+    setPath:         (newFolder) => ipcRenderer.invoke('db:setPath', newFolder),
+    isFirstRun:      ()          => ipcRenderer.invoke('db:isFirstRun'),
+    markNotFirstRun: ()          => ipcRenderer.invoke('db:markNotFirstRun'),
   },
 
   settings: {
@@ -123,19 +141,19 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   health: {
-    getAllAnimalsOverview:  ()                => ipcRenderer.invoke('health:getAllAnimalsOverview'),
-    getSummaryForAnimal:   (animalId)         => ipcRenderer.invoke('health:getSummaryForAnimal', animalId),
-    getForAnimal:          (animalId)         => ipcRenderer.invoke('health:getForAnimal', animalId),
-    addIssue:              (animalId, data)   => ipcRenderer.invoke('health:addIssue', animalId, data),
-    updateIssue:           (id, data)         => ipcRenderer.invoke('health:updateIssue', id, data),
-    deleteIssue:           (id)               => ipcRenderer.invoke('health:deleteIssue', id),
-    getVetVisits:          (animalId)         => ipcRenderer.invoke('health:getVetVisits', animalId),
-    addVetVisit:           (animalId, data)   => ipcRenderer.invoke('health:addVetVisit', animalId, data),
-    updateVetVisit:        (id, data)         => ipcRenderer.invoke('health:updateVetVisit', id, data),
-    deleteVetVisit:        (id)               => ipcRenderer.invoke('health:deleteVetVisit', id),
-    getMedications:        (animalId)         => ipcRenderer.invoke('health:getMedications', animalId),
-    addMedication:         (animalId, data)   => ipcRenderer.invoke('health:addMedication', animalId, data),
-    updateMedication:      (id, data)         => ipcRenderer.invoke('health:updateMedication', id, data),
-    deleteMedication:      (id)               => ipcRenderer.invoke('health:deleteMedication', id),
+    getAllAnimalsOverview: ()                => ipcRenderer.invoke('health:getAllAnimalsOverview'),
+    getSummaryForAnimal:  (animalId)         => ipcRenderer.invoke('health:getSummaryForAnimal', animalId),
+    getForAnimal:         (animalId)         => ipcRenderer.invoke('health:getForAnimal', animalId),
+    addIssue:             (animalId, data)   => ipcRenderer.invoke('health:addIssue', animalId, data),
+    updateIssue:          (id, data)         => ipcRenderer.invoke('health:updateIssue', id, data),
+    deleteIssue:          (id)               => ipcRenderer.invoke('health:deleteIssue', id),
+    getVetVisits:         (animalId)         => ipcRenderer.invoke('health:getVetVisits', animalId),
+    addVetVisit:          (animalId, data)   => ipcRenderer.invoke('health:addVetVisit', animalId, data),
+    updateVetVisit:       (id, data)         => ipcRenderer.invoke('health:updateVetVisit', id, data),
+    deleteVetVisit:       (id)               => ipcRenderer.invoke('health:deleteVetVisit', id),
+    getMedications:       (animalId)         => ipcRenderer.invoke('health:getMedications', animalId),
+    addMedication:        (animalId, data)   => ipcRenderer.invoke('health:addMedication', animalId, data),
+    updateMedication:     (id, data)         => ipcRenderer.invoke('health:updateMedication', id, data),
+    deleteMedication:     (id)               => ipcRenderer.invoke('health:deleteMedication', id),
   },
 })

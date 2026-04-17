@@ -7,7 +7,7 @@ import { formatDate } from '../utils/format'
  * Expandable offspring tracker panel, shown below a ClutchCard.
  * Lets user log individual babies — sex, weight, disposition, sale info.
  */
-export default function OffspringPanel({ clutch, breedingId }) {
+export default function OffspringPanel({ clutch, breedingId, onUpdate }) {
   const [expanded, setExpanded] = useState(false)
   const { data: offspring, loading, refetch } = useAsync(
     () => expanded ? window.api.offspring.getByClutch(clutch.id) : Promise.resolve(null),
