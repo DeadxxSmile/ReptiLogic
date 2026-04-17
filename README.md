@@ -90,7 +90,7 @@ If you see a **"Could not find Visual Studio"** error, the `.npmrc` in this repo
 npm run build
 ```
 
-Output: `dist/ReptiLogic Setup 0.2.0.exe`
+Output: `dist/ReptiLogic Setup 1.0.0.exe`
 
 ---
 

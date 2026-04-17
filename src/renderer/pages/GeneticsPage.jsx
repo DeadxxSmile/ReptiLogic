@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAnimals, useMorphs, useSpecies } from '../hooks/useData'
 import { MorphTag, LoadingSpinner, StatTile } from '../components/shared'
 import { inheritanceLabel, pct } from '../utils/format'
@@ -10,9 +11,10 @@ export default function GeneticsPage() {
   const { data: speciesList } = useSpecies()
 
   // Support ?male=id&female=id deep-links from Suggested Pairings
-  const params   = new URLSearchParams(window.location.hash.split('?')[1] || '')
-  const initMale = params.get('male')   || ''
-  const initFem  = params.get('female') || ''
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const initMale = searchParams.get('male')   || ''
+  const initFem  = searchParams.get('female') || ''
 
   const [speciesId, setSpeciesId] = useState('ball_python')
   const { data: morphList } = useMorphs(speciesId)

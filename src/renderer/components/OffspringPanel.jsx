@@ -46,8 +46,12 @@ export default function OffspringPanel({ clutch, breedingId }) {
   }
 
   const handleDelete = async (id) => {
-    await window.api.offspring.delete(id)
-    refetch()
+    try {
+      await window.api.offspring.delete(id)
+      refetch()
+    } catch (e) {
+      console.error('Failed to delete offspring:', e)
+    }
   }
 
   const startEdit = (o) => {

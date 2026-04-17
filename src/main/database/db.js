@@ -64,8 +64,11 @@ function runMigrations() {
     if (applied.has(file)) continue
     console.log('[DB] Applying migration:', file)
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8')
-    _db.exec(sql)
-    _db.prepare('INSERT INTO _migrations (filename) VALUES (?)').run(file)
+    const applyMigration = _db.transaction(() => {
+      _db.exec(sql)
+      _db.prepare('INSERT INTO _migrations (filename) VALUES (?)').run(file)
+    })
+    applyMigration()
   }
 }
 

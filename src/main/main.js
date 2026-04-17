@@ -1,5 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
 const path = require('path')
+
+// Remove the default application menu bar entirely
+Menu.setApplicationMenu(null)
 
 const isDev = !app.isPackaged
 const devServerUrl = process.env.ELECTRON_RENDERER_URL || 'http://127.0.0.1:5173'
@@ -14,12 +17,30 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      webSecurity: true,
     },
-    titleBarStyle: 'default',
+    title: 'ReptiLogic',
+    titleBarStyle: 'hidden',
+    frame: false,
+    transparent: false,
     backgroundColor: '#0f0f0f',
-    show: false
+    roundedCorners: true,
+    thickFrame: false,
+    show: false,
   })
+
+  // Expose window control IPC
+  ipcMain.handle('window:minimize', () => win.minimize())
+  ipcMain.handle('window:maximize', () => {
+    win.isMaximized() ? win.unmaximize() : win.maximize()
+  })
+  ipcMain.handle('window:close', () => win.close())
+  ipcMain.handle('window:isMaximized', () => win.isMaximized())
+
+  // Tell renderer when maximized state changes so icon can update
+  win.on('maximize',   () => win.webContents.send('window:maximized', true))
+  win.on('unmaximize', () => win.webContents.send('window:maximized', false))
 
   if (isDev) {
     win.loadURL(devServerUrl)
@@ -32,8 +53,6 @@ function createWindow() {
 
   win.once('ready-to-show', () => win.show())
 }
-
-
 app.whenReady().then(() => {
   const db = require('./database/db')
 
@@ -66,9 +85,15 @@ const utilHandlers     = require('./ipc/utilHandlers')
 const exportHandlers   = require('./ipc/exportHandlers')
 const healthHandlers   = require('./ipc/healthHandlers')
 
-animalHandlers.register(ipcMain)
-morphHandlers.register(ipcMain)
-breedingHandlers.register(ipcMain)
-utilHandlers.register(ipcMain, dialog)
-exportHandlers.register(ipcMain, dialog)
-healthHandlers.register(ipcMain)
+try {
+  animalHandlers.register(ipcMain)
+  morphHandlers.register(ipcMain)
+  breedingHandlers.register(ipcMain)
+  utilHandlers.register(ipcMain, dialog)
+  exportHandlers.register(ipcMain, dialog)
+  healthHandlers.register(ipcMain)
+} catch (err) {
+  console.error('[IPC] Failed to register handlers:', err)
+  dialog.showErrorBox('Startup error', 'Failed to register IPC handlers: ' + err.message)
+  app.quit()
+}

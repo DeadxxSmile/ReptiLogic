@@ -91,6 +91,15 @@ contextBridge.exposeInMainWorld('api', {
     set:    (key, value) => ipcRenderer.invoke('settings:set', key, value),
   },
 
+  window: {
+    minimize:    ()  => ipcRenderer.invoke('window:minimize'),
+    maximize:    ()  => ipcRenderer.invoke('window:maximize'),
+    close:       ()  => ipcRenderer.invoke('window:close'),
+    isMaximized: ()  => ipcRenderer.invoke('window:isMaximized'),
+    onMaximized: (cb) => ipcRenderer.on('window:maximized', (_, val) => cb(val)),
+    offMaximized: (cb) => ipcRenderer.removeListener('window:maximized', cb),
+  },
+
   health: {
     getAllAnimalsOverview:  ()                => ipcRenderer.invoke('health:getAllAnimalsOverview'),
     getSummaryForAnimal:   (animalId)         => ipcRenderer.invoke('health:getSummaryForAnimal', animalId),

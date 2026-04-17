@@ -1,6 +1,6 @@
 {
   "name": "reptilogic",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Desktop collection and breeding manager for reptile keepers",
   "main": "src/main/main.js",
   "scripts": {
@@ -18,7 +18,6 @@
   "dependencies": {
     "better-sqlite3": "12.9.0",
     "date-fns": "4.1.0",
-    "electron-store": "11.0.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "6.30.3",
@@ -47,7 +46,27 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "resources/art/ReptiLogic.ico"
+      "icon": "resources/art/ReptiLogic.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "resources/art/ReptiLogic.ico",
+      "uninstallerIcon": "resources/art/ReptiLogic.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ReptiLogic",
+      "runAfterFinish": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "resources/art/ReptiLogic.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "resources/art/ReptiLogic.png"
     }
   }
 }

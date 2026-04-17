@@ -1,0 +1,92 @@
+.titlebar {
+  height:          38px;
+  min-height:      38px;
+  background:      #141414;
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  position:        relative;
+  user-select:     none;
+  border-bottom:   1px solid var(--border-subtle);
+  /* No border-radius here — the OS handles the window corners */
+}
+
+/* Full-width drag region sits behind everything */
+.titlebar-drag {
+  position:    absolute;
+  inset:       0;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+/* Center: logo + app name */
+.titlebar-center {
+  position:    absolute;
+  left:        50%;
+  transform:   translateX(-50%);
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-logo {
+  width:       18px;
+  height:      18px;
+  object-fit:  contain;
+  opacity:     0.9;
+}
+
+.titlebar-title {
+  font-size:   13px;
+  font-weight: 600;
+  color:       var(--text-secondary);
+  letter-spacing: 0.2px;
+}
+
+/* Window control buttons — right side */
+.titlebar-controls {
+  display:    flex;
+  align-items: stretch;
+  height:     100%;
+  margin-left: auto;
+  position:   relative;
+  z-index:    1;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.titlebar-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  width:           46px;
+  height:          100%;
+  background:      transparent;
+  border:          none;
+  color:           var(--text-muted);
+  cursor:          pointer;
+  transition:      background 0.1s, color 0.1s;
+  padding:         0;
+}
+
+.titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color:      var(--text-primary);
+}
+
+/* Close button gets a red hover */
+.titlebar-btn--close:hover {
+  background: #c42b1c;
+  color:      #fff;
+}
+
+.titlebar-btn--close:active {
+  background: #b52918;
+}
+
+.titlebar-btn--minimize:active,
+.titlebar-btn--maximize:active {
+  background: rgba(255, 255, 255, 0.12);
+}
