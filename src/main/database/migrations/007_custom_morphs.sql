@@ -1,0 +1,1 @@
+ALTER TABLE morphs ADD COLUMN is_user_created INTEGER NOT NULL DEFAULT 0;

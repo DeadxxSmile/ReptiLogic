@@ -132,7 +132,6 @@ function register(ipcMain) {
     const id  = uuidv4()
     const now = new Date().toISOString()
 
-    const tx = db.transaction(() => {
     db.prepare(`
       INSERT INTO clutches (
         id, breeding_record_id, lay_date, hatch_date,
@@ -171,8 +170,6 @@ function register(ipcMain) {
         updated_at    = @now
       WHERE id = @brId
     `).run({ brId: data.breeding_record_id, now })
-    })
-    tx()
 
     return db.prepare('SELECT * FROM clutches WHERE id = ?').get(id)
   })

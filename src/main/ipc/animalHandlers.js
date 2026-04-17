@@ -10,6 +10,7 @@ const { getDb } = require('../database/db')
 
 function normalizeMorphExpression(expression) {
   // Older renderer builds used 'single' for a one-copy co-dominant gene.
+  // The database only accepts the canonical enum values below.
   if (expression === 'single') return 'visual'
   return expression || 'visual'
 }
@@ -30,7 +31,7 @@ function getAllAnimals() {
     ORDER BY a.created_at DESC
   `).all()
 
-  // Prepare once, call in loop — avoids N+1 re-preparation overhead
+  // Attach morph data to each animal
   const getMorphs = db.prepare(`
     SELECT
       am.*,
@@ -98,6 +99,7 @@ function getAnimalById(id) {
 function getAnimalHistory(id) {
   const db = getDb()
 
+  // All breeding records this animal was involved in
   const breedingRecords = db.prepare(`
     SELECT
       br.*,
@@ -132,38 +134,108 @@ function createAnimal(data) {
   const id = data.id || uuidv4()
   const now = new Date().toISOString()
 
-  // Wrap animal + morph inserts in a single transaction — atomic, faster
   const tx = db.transaction(() => {
-    db.prepare(`
-      INSERT INTO animals (
-        id, species_id, name, sex, dob, dob_estimated,
-        weight_grams, acquired_date, acquired_from,
-        acquisition_price, status, notes, created_at, updated_at
-      ) VALUES (
-        @id, @species_id, @name, @sex, @dob, @dob_estimated,
-        @weight_grams, @acquired_date, @acquired_from,
-        @acquisition_price, @status, @notes, @created_at, @updated_at
-      )
-    `).run({
-      id,
-      species_id:        data.species_id,
-      name:              data.name,
-      sex:               data.sex || 'unknown',
-      dob:               data.dob || null,
-      dob_estimated:     data.dob_estimated ? 1 : 0,
-      weight_grams:      data.weight_grams || null,
-      acquired_date:     data.acquired_date || null,
-      acquired_from:     data.acquired_from || null,
-      acquisition_price: data.acquisition_price || null,
-      status:            data.status || 'active',
-      notes:             data.notes || null,
-      created_at:        now,
-      updated_at:        now,
-    })
+  const insert = db.prepare(`
+    INSERT INTO animals (
+      id, species_id, name, sex, dob, dob_estimated,
+      weight_grams, acquired_date, acquired_from,
+      acquisition_price, status, notes, created_at, updated_at
+    ) VALUES (
+      @id, @species_id, @name, @sex, @dob, @dob_estimated,
+      @weight_grams, @acquired_date, @acquired_from,
+      @acquisition_price, @status, @notes, @created_at, @updated_at
+    )
+  `)
 
-    if (data.morphs && data.morphs.length > 0) {
+  insert.run({
+    id,
+    species_id:        data.species_id,
+    name:              data.name,
+    sex:               data.sex || 'unknown',
+    dob:               data.dob || null,
+    dob_estimated:     data.dob_estimated ? 1 : 0,
+    weight_grams:      data.weight_grams || null,
+    acquired_date:     data.acquired_date || null,
+    acquired_from:     data.acquired_from || null,
+    acquisition_price: data.acquisition_price || null,
+    status:            data.status || 'active',
+    notes:             data.notes || null,
+    created_at:        now,
+    updated_at:        now,
+  })
+
+  // Insert morph associations
+  if (data.morphs && data.morphs.length > 0) {
+    const insertMorph = db.prepare(`
+      INSERT OR IGNORE INTO animal_morphs (id, animal_id, morph_id, expression, het_percent, confirmed, notes)
+      VALUES (@id, @animal_id, @morph_id, @expression, @het_percent, @confirmed, @notes)
+    `)
+
+    for (const morph of data.morphs) {
+      insertMorph.run({
+        id:          uuidv4(),
+        animal_id:   id,
+        morph_id:    morph.morph_id,
+        expression:  normalizeMorphExpression(morph.expression),
+        het_percent: morph.het_percent || null,
+        confirmed:   morph.confirmed ? 1 : 0,
+        notes:       morph.notes || null,
+      })
+    }
+  }
+
+  })
+  tx()
+  return getAnimalById(id)
+}
+
+function updateAnimal(id, data) {
+  const db = getDb()
+
+  const update = db.prepare(`
+    UPDATE animals SET
+      name              = COALESCE(@name, name),
+      sex               = COALESCE(@sex, sex),
+      dob               = @dob,
+      dob_estimated     = COALESCE(@dob_estimated, dob_estimated),
+      weight_grams      = @weight_grams,
+      length_cm         = @length_cm,
+      acquired_date     = @acquired_date,
+      acquired_from     = @acquired_from,
+      acquisition_price = @acquisition_price,
+      status            = COALESCE(@status, status),
+      status_date       = @status_date,
+      status_notes      = @status_notes,
+      notes             = @notes,
+      updated_at        = @updated_at
+    WHERE id = @id
+  `)
+
+  update.run({
+    id,
+    name:              data.name || null,
+    sex:               data.sex || null,
+    dob:               data.dob !== undefined ? data.dob : undefined,
+    dob_estimated:     data.dob_estimated !== undefined ? (data.dob_estimated ? 1 : 0) : null,
+    weight_grams:      data.weight_grams !== undefined ? data.weight_grams : null,
+    length_cm:         data.length_cm !== undefined ? data.length_cm : null,
+    acquired_date:     data.acquired_date !== undefined ? data.acquired_date : null,
+    acquired_from:     data.acquired_from !== undefined ? data.acquired_from : null,
+    acquisition_price: data.acquisition_price !== undefined ? data.acquisition_price : null,
+    status:            data.status || null,
+    status_date:       data.status_date !== undefined ? data.status_date : null,
+    status_notes:      data.status_notes !== undefined ? data.status_notes : null,
+    notes:             data.notes !== undefined ? data.notes : null,
+    updated_at:        new Date().toISOString(),
+  })
+
+  // Update morphs if provided
+  if (data.morphs !== undefined) {
+    db.prepare('DELETE FROM animal_morphs WHERE animal_id = ?').run(id)
+
+    if (data.morphs.length > 0) {
       const insertMorph = db.prepare(`
-        INSERT OR IGNORE INTO animal_morphs (id, animal_id, morph_id, expression, het_percent, confirmed, notes)
+        INSERT INTO animal_morphs (id, animal_id, morph_id, expression, het_percent, confirmed, notes)
         VALUES (@id, @animal_id, @morph_id, @expression, @het_percent, @confirmed, @notes)
       `)
       for (const morph of data.morphs) {
@@ -178,80 +250,14 @@ function createAnimal(data) {
         })
       }
     }
-  })
+  }
 
-  tx()
-  return getAnimalById(id)
-}
-
-function updateAnimal(id, data) {
-  const db = getDb()
-
-  const tx = db.transaction(() => {
-    db.prepare(`
-      UPDATE animals SET
-        name              = COALESCE(@name, name),
-        sex               = COALESCE(@sex, sex),
-        dob               = @dob,
-        dob_estimated     = COALESCE(@dob_estimated, dob_estimated),
-        weight_grams      = @weight_grams,
-        length_cm         = @length_cm,
-        acquired_date     = @acquired_date,
-        acquired_from     = @acquired_from,
-        acquisition_price = @acquisition_price,
-        status            = COALESCE(@status, status),
-        status_date       = @status_date,
-        status_notes      = @status_notes,
-        notes             = @notes,
-        updated_at        = @updated_at
-      WHERE id = @id
-    `).run({
-      id,
-      name:              data.name || null,
-      sex:               data.sex || null,
-      dob:               data.dob !== undefined ? data.dob : null,
-      dob_estimated:     data.dob_estimated !== undefined ? (data.dob_estimated ? 1 : 0) : null,
-      weight_grams:      data.weight_grams !== undefined ? data.weight_grams : null,
-      length_cm:         data.length_cm !== undefined ? data.length_cm : null,
-      acquired_date:     data.acquired_date !== undefined ? data.acquired_date : null,
-      acquired_from:     data.acquired_from !== undefined ? data.acquired_from : null,
-      acquisition_price: data.acquisition_price !== undefined ? data.acquisition_price : null,
-      status:            data.status || null,
-      status_date:       data.status_date !== undefined ? data.status_date : null,
-      status_notes:      data.status_notes !== undefined ? data.status_notes : null,
-      notes:             data.notes !== undefined ? data.notes : null,
-      updated_at:        new Date().toISOString(),
-    })
-
-    if (data.morphs !== undefined) {
-      db.prepare('DELETE FROM animal_morphs WHERE animal_id = ?').run(id)
-
-      if (data.morphs.length > 0) {
-        const insertMorph = db.prepare(`
-          INSERT INTO animal_morphs (id, animal_id, morph_id, expression, het_percent, confirmed, notes)
-          VALUES (@id, @animal_id, @morph_id, @expression, @het_percent, @confirmed, @notes)
-        `)
-        for (const morph of data.morphs) {
-          insertMorph.run({
-            id:          uuidv4(),
-            animal_id:   id,
-            morph_id:    morph.morph_id,
-            expression:  normalizeMorphExpression(morph.expression),
-            het_percent: morph.het_percent || null,
-            confirmed:   morph.confirmed ? 1 : 0,
-            notes:       morph.notes || null,
-          })
-        }
-      }
-    }
-  })
-
-  tx()
   return getAnimalById(id)
 }
 
 function deleteAnimal(id) {
   const db = getDb()
+  // Cascades handle animal_morphs, photos, measurements, feedings
   db.prepare('DELETE FROM animals WHERE id = ?').run(id)
   return { success: true }
 }
@@ -259,13 +265,14 @@ function deleteAnimal(id) {
 // ── Register handlers ────────────────────────────────────────────────────────
 
 function register(ipcMain) {
-  ipcMain.handle('animals:getAll',     ()              => getAllAnimals())
-  ipcMain.handle('animals:getById',    (_, id)         => getAnimalById(id))
-  ipcMain.handle('animals:create',     (_, data)       => createAnimal(data))
-  ipcMain.handle('animals:update',     (_, id, data)   => updateAnimal(id, data))
-  ipcMain.handle('animals:delete',     (_, id)         => deleteAnimal(id))
-  ipcMain.handle('animals:getHistory', (_, id)         => getAnimalHistory(id))
+  ipcMain.handle('animals:getAll',     ()          => getAllAnimals())
+  ipcMain.handle('animals:getById',    (_, id)     => getAnimalById(id))
+  ipcMain.handle('animals:create',     (_, data)   => createAnimal(data))
+  ipcMain.handle('animals:update',     (_, id, data) => updateAnimal(id, data))
+  ipcMain.handle('animals:delete',     (_, id)     => deleteAnimal(id))
+  ipcMain.handle('animals:getHistory', (_, id)     => getAnimalHistory(id))
 
+  // Species list (used in forms)
   ipcMain.handle('species:getAll', () => {
     return getDb().prepare('SELECT * FROM species ORDER BY common_name').all()
   })

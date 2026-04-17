@@ -41,6 +41,7 @@
     "files": [
       "build/**/*",
       "src/main/**/*",
+      "resources/**/*",
       "node_modules/**/*",
       "package.json"
     ],
@@ -49,6 +50,7 @@
       "icon": "resources/art/ReptiLogic.ico",
       "requestedExecutionLevel": "asInvoker"
     },
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -68,5 +70,7 @@
       "target": "AppImage",
       "icon": "resources/art/ReptiLogic.png"
     }
-  }
+  },
+  "author": "DeadxxSmile",
+  "license": "GPL-3.0-only"
 }

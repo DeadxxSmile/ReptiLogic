@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAsync, useSpecies } from '../hooks/useData'
 import { LoadingSpinner, SearchInput } from '../components/shared'
 import { inheritanceLabel } from '../utils/format'
 import './MorphLibraryPage.css'
 
 export default function MorphLibraryPage() {
+  const navigate = useNavigate()
   const { data: speciesList } = useSpecies()
   const { data: allMorphs, loading } = useAsync(() => window.api.morphs.getAll(), [])
 
@@ -47,8 +49,11 @@ export default function MorphLibraryPage() {
   return (
     <div className="morph-library-page">
       <div className="page-header">
-        <h1>Morph Library</h1>
-        <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>{filtered.length} morphs</span>
+        <div className="page-header-left">
+          <h1>Morph Library</h1>
+          <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>{filtered.length} morphs</span>
+        </div>
+        <button className="btn btn-primary" onClick={() => navigate('/morphs/add')}>+ Add Morph</button>
       </div>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', maxWidth: 600 }}>
         Reference database of all known morphs and genes. Includes inheritance type, health flags, and descriptions.

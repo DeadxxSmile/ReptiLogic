@@ -10,6 +10,7 @@ import BreedingPage     from './renderer/pages/BreedingPage'
 import BreedingDetailPage from './renderer/pages/BreedingDetailPage'
 import GeneticsPage     from './renderer/pages/GeneticsPage'
 import MorphLibraryPage from './renderer/pages/MorphLibraryPage'
+import AddMorphPage     from './renderer/pages/AddMorphPage'
 import SettingsPage     from './renderer/pages/SettingsPage'
 import HealthPage       from './renderer/pages/HealthPage'
 import './renderer/styles/global.css'
@@ -32,6 +33,7 @@ root.render(
           <Route path="breeding/:id"        element={<BreedingDetailPage />} />
           <Route path="genetics"            element={<GeneticsPage />} />
           <Route path="morphs"              element={<MorphLibraryPage />} />
+          <Route path="morphs/add"          element={<AddMorphPage />} />
           <Route path="health"              element={<HealthPage />} />
           <Route path="settings"            element={<SettingsPage />} />
         </Route>

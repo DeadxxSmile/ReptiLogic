@@ -5,7 +5,6 @@ const { app } = require('electron')
 let _db = null
 
 function getDbPath() {
-  // In dev, store DB next to the project. In production, use userData.
   const base = app.isPackaged
     ? app.getPath('userData')
     : path.join(__dirname, '../../../')
@@ -28,8 +27,6 @@ function initialize() {
   console.log('[DB] Opening database at:', dbPath)
 
   _db = new Database(dbPath, { verbose: isVerbose ? console.log : null })
-
-  // Performance pragmas
   _db.pragma('journal_mode = WAL')
   _db.pragma('foreign_keys = ON')
   _db.pragma('synchronous = NORMAL')
@@ -39,11 +36,17 @@ function initialize() {
   return _db
 }
 
+function close() {
+  if (_db) {
+    _db.close()
+    _db = null
+  }
+}
+
 function runMigrations() {
   const migrationsDir = path.join(__dirname, 'migrations')
   if (!fs.existsSync(migrationsDir)) return
 
-  // Track applied migrations
   _db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,4 +75,4 @@ function runMigrations() {
   }
 }
 
-module.exports = { initialize, getDb, getDbPath }
+module.exports = { initialize, getDb, getDbPath, close }

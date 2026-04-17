@@ -1,174 +1,90 @@
-# 🐍 ReptiLogic
+# MAJOR NOTE!!
 
-A desktop application for reptile breeders and collectors to manage their animals, plan breeding seasons, track health records, and calculate offspring genetics.
+## A Note on Development:
+This app's UI and structure were generated heavily with ChatGPT, but the underlying project direction, feature planning, and the real-world keeper workflow it is built around come from hands-on use and ongoing iteration.
 
-Built with **Electron**, **React**, **Vite**, and **SQLite** — all data is stored locally on your machine.
+ReptiLogic exists because most reptile keepers already have their data scattered between notes apps, spreadsheets, photos, and memory. The goal here is to pull all of that into one local desktop app that is easy to use, fast to search, and practical for real breeding and collection management.
 
----
+The current focus is getting a solid first public build into people's hands quickly. That means there are still rough edges, and there is absolutely room for the codebase and UI to improve over time.
 
-## Features
+# ReptiLogic v1.0.0
 
-### 🐍 Collection
-- Track your full animal collection with photos, morphs, weights, and notes
-- Grid and list views with filtering by species, sex, and status
-- Full animal history — breeding records, weight log, feeding log, photos
+Desktop reptile collection and breeding manager built with Electron, React, Vite, and SQLite.
 
-### 🏥 Health
-- Per-animal health dashboard with weight trend charts
-- Log health issues with category, severity, and treatment
-- Track medications (current and past) with dosage and frequency
-- Record vet visits with diagnosis, treatment, and follow-up dates
-- Feeding reminders for animals overdue by 14+ days
-- Weighing reminders for animals not measured in 30+ days
+## Current Features
+- Local SQLite-backed collection management for reptiles
+- Animal records with sex, weight, dates, source, price, morphs, notes, and photos
+- Breeding records with pairings, clutch tracking, offspring tracking, and outcomes
+- Health tracking for issues, medications, and vet visits
+- Genetics calculator for keeper-friendly offspring odds
+- Morph library for built-in reference data
+- Settings page with:
+  - export of collection CSV
+  - export of breeding CSV
+  - full database backup export
+  - collection CSV import for bulk starting data
+  - backup restore import
+  - exportable CSV template for spreadsheet-based onboarding
+- Resources folder for app art, logos, and CSV templates
+- App data stored locally on the user's machine
 
-### 🥚 Breeding
-- Pairing records with full status pipeline (Planned → Active → Gravid → Laid → Hatched)
-- Clutch tracking — egg count, slug count, hatch count, incubation details
-- Individual offspring logging with sex, weight, disposition, and sale tracking
-- Suggested pairings based on complementary genetics in your collection
+## Resources Folder
+This project includes a `resources` folder for app assets and starter files.
 
-### 🧬 Genetics Calculator
-- Punnett square engine supporting all inheritance types:
-  - Recessive, Co-dominant, Dominant, Line-bred
-- Multi-gene calculations — handles any combination of genes simultaneously
-- Shows every possible offspring outcome with accurate probabilities
-- Health warnings for morphs with known concerns (e.g. Spider wobble)
-- Works from your collection or with manually entered genes
+Included items:
+- `resources/art/ReptiLogic.ico`
+- `resources/art/ReptiLogic.png`
+- `resources/templates/collection-import-template.csv`
 
-### 📖 Morph Library
-- 130+ ball python morphs with inheritance type, gene symbol, super form names, and health flags
-- 25+ western hognose morphs
-- Schema supports easy addition of corn snake, boa, carpet python, and more
-- Browsable, searchable reference built into the app
-
-### ⚙️ Settings & Export
-- Export collection to CSV (opens in Excel / Google Sheets)
-- Export breeding records to CSV
-- Full database backup (.db file)
-- Configurable feeding and weighing reminder thresholds
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Desktop shell | Electron 41 |
-| Frontend | React 18 + Vite 7 |
-| Routing | React Router 6 |
-| Database | SQLite via better-sqlite3 |
-| Dates | date-fns 4 |
-| IDs | uuid 11 |
-| Packaging | electron-builder 26 |
-
----
-
-## Getting started
-
-### Prerequisites
-
-- **Node.js 22 or 24 LTS** — https://nodejs.org
-- **Visual Studio 2022** with the **"Desktop development with C++"** workload
-  (required to compile `better-sqlite3` for Electron)
-
-### Install and run
-
+## Running
 ```bash
-git clone https://github.com/your-username/reptilogic.git
-cd reptilogic
 npm install
 npm start
 ```
 
-`npm install` runs `electron-builder install-app-deps` automatically via the `postinstall` script, which compiles `better-sqlite3` for your Electron version.
-
-If you see a **"Could not find Visual Studio"** error, the `.npmrc` in this repo sets `msvs_version=2022` which should resolve it. If the issue persists, make sure the C++ workload is installed in Visual Studio 2022 via the Visual Studio Installer.
-
-### Build a distributable installer
-
+## Building
 ```bash
 npm run build
 ```
 
-Output: `dist/ReptiLogic Setup 1.0.0.exe`
+Typical build output:
+- `dist/ReptiLogic-Setup-1.0.0.exe`
 
----
+If Windows packaging fails while extracting `winCodeSign`, that is usually caused by Windows symlink privileges. Turning on Windows Developer Mode or running the terminal as Administrator is commonly required for unsigned local Electron builds on some systems.
 
-## Project structure
+## Collection CSV Import Notes
+The collection importer is meant to help a keeper bring in an existing spreadsheet without typing every animal by hand.
 
-```
-reptilogic/
-├── index.html                        ← Vite entry HTML
-├── vite.config.js                    ← Vite + Electron config
-├── src/
-│   ├── index.jsx                     ← React app entry point
-│   ├── main/                         ← Electron main process (Node.js)
-│   │   ├── main.js                   ← Window creation, IPC registration
-│   │   ├── preload.js                ← Secure renderer ↔ main bridge
-│   │   ├── database/
-│   │   │   ├── db.js                 ← SQLite connection + auto-migration
-│   │   │   └── migrations/           ← SQL migration files (run in order)
-│   │   ├── genetics/
-│   │   │   └── calculator.js         ← Punnett square engine
-│   │   └── ipc/                      ← IPC handlers (one file per domain)
-│   │       ├── animalHandlers.js
-│   │       ├── breedingHandlers.js
-│   │       ├── healthHandlers.js
-│   │       ├── morphHandlers.js
-│   │       ├── utilHandlers.js
-│   │       └── exportHandlers.js
-│   └── renderer/                     ← React frontend
-│       ├── App.jsx                   ← Shell + sidebar navigation
-│       ├── pages/                    ← One file per page
-│       ├── components/               ← Shared UI components
-│       ├── hooks/                    ← Data fetching hooks
-│       ├── utils/                    ← Formatting helpers
-│       └── styles/                   ← Global CSS + design tokens
-└── public/
-    └── icon.ico
-```
+Supported columns in the included template/export format:
+- Name
+- Species
+- Sex
+- DOB
+- DOB Estimated
+- Weight (g)
+- Status
+- Acquired Date
+- Acquired From
+- Purchase Price
+- Morphs
+- Notes
 
----
-
-## Database
-
-The SQLite database is created automatically on first launch and migrations run in order. In development it lives in the project root as `reptilogic.db`. In a packaged build it's stored at:
-
-```
-Windows: C:\Users\<Name>\AppData\Roaming\ReptiLogic\reptilogic.db
-```
-
-### Adding species or morphs
-
-Create a new migration file in `src/main/database/migrations/` following the existing naming pattern (e.g. `007_corn_snake_morphs.sql`). It will run automatically on next launch.
-
----
-
-## Species supported
-
-| Species | Status |
-|---|---|
-| Ball Python | ✅ Full morph database (130+ morphs) |
-| Western Hognose | ✅ Full morph database (25+ morphs) |
-| Corn Snake | 🔧 Species entry included, morphs can be added |
-| Boa Constrictor | 🔧 Species entry included |
-| Carpet Python | 🔧 Species entry included |
-| Kenyan Sand Boa | 🔧 Species entry included |
-| Blood Python | 🔧 Species entry included |
-| + more | 🔧 Schema is fully extensible |
-
----
-
-## Roadmap
-
-- [ ] Mobile companion app (React Native) with sync via PocketBase
-- [ ] Weight chart export to image/PDF
-- [ ] Breeding season planner with calendar view
-- [ ] Offspring kept → auto-add to collection
-- [ ] Multi-user / shared collection support
-
----
+Morph examples:
+- `Clown`
+- `Het Pied`
+- `50% Poss Het Lavender`
+- `Proven Het Albino`
+- `Super Pastel`
 
 ## License
+Distributed under the GNU GPL-3.0 license; please check the `LICENSE` file in the GitHub repository for more information.
 
-MIT
+## Disclaimer
+The following is the disclaimer that applies to all scripts, functions, one-liners, etc. This disclaimer supersedes any disclaimer included in any script, function, one-liner, etc. You running this script/function means you will not blame the author(s) if this breaks your stuff. This script/function is provided **AS IS** without warranty of any kind.
+
+Author(s) disclaim all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a particular purpose. The entire risk arising out of the use or performance of the sample scripts and documentation remains with you.
+
+In no event shall author(s) be held liable for any damages whatsoever (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability to use the script or documentation. Neither this script/function, nor any part of it other than those parts that are explicitly copied from others, may be republished without author(s) express written permission.
+
+The author(s) retain the right to alter this disclaimer at any time. For the most up to date version of the disclaimer, see:
+https://ucunleashed.com/code-disclaimer

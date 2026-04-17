@@ -1,33 +1,33 @@
 import React, { useState } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import TitleBar from './components/TitleBar'
 import './styles/App.css'
 
 const NAV_ITEMS = [
   { to: '/dashboard',  label: 'Dashboard',    icon: '🏠' },
   { to: '/collection', label: 'Collection',   icon: '🐍' },
-  { to: '/health',     label: 'Health',        icon: '🏥' },
-  { to: '/breeding',   label: 'Breeding',      icon: '🥚' },
-  { to: '/genetics',   label: 'Genetics Calc', icon: '🧬' },
-  { to: '/morphs',     label: 'Morph Library', icon: '📖' },
-  { to: '/settings',   label: 'Settings',      icon: '⚙️'  },
+  { to: '/health',     label: 'Health',       icon: '🏥' },
+  { to: '/breeding',   label: 'Breeding',     icon: '🥚' },
+  { to: '/genetics',   label: 'Genetics Calc',icon: '🧬' },
+  { to: '/morphs',     label: 'Morph Library',icon: '📖' },
+  { to: '/settings',   label: 'Settings',     icon: '⚙️'  },
 ]
 
 export default function App() {
+  const location = useLocation()
   const [navCollapsed, setNavCollapsed] = useState(false)
 
   return (
     <div className="app-root">
 
-      {/* ── Custom title bar ─────────────────────────────────── */}
+      {/* ── Custom title bar ──────────────────────────────────── */}
       <TitleBar />
 
-      {/* ── Body: sidebar + content ──────────────────────────── */}
+      {/* ── Body: sidebar + content ───────────────────────────── */}
       <div className={`app-shell ${navCollapsed ? 'nav-collapsed' : ''}`}>
-
         <aside className="sidebar">
           <div className="sidebar-logo">
-            <img src="./logo.png" alt="" className="logo-img" />
+            <img src="./logo.png" alt="ReptiLogic" className="logo-image" />
             {!navCollapsed && <span className="logo-text">ReptiLogic</span>}
           </div>
 
@@ -36,9 +36,7 @@ export default function App() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
-                  `nav-item ${isActive ? 'nav-item-active' : ''}`
-                }
+                className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}
                 title={navCollapsed ? item.label : undefined}
               >
                 <span className="nav-icon">{item.icon}</span>
@@ -58,7 +56,7 @@ export default function App() {
 
         <main className="main-content">
           <div className="content-scroll">
-            <Outlet />
+            <Outlet key={location.pathname} />
           </div>
         </main>
       </div>

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useAsync } from '../hooks/useData'
-import { LoadingSpinner, StatTile } from '../components/shared'
+import { LoadingSpinner } from '../components/shared'
 import './SettingsPage.css'
 
 export default function SettingsPage() {
   const { data: settings, loading, refetch } = useAsync(() => window.api.settings.getAll(), [])
-  const [saved,   setSaved]   = useState(false)
-  const [exporting, setExporting] = useState(null)
-  const [exportResult, setExportResult] = useState(null)
+  const [saved, setSaved] = useState(false)
+  const [busyAction, setBusyAction] = useState(null)
+  const [result, setResult] = useState(null)
 
   const setSetting = async (key, value) => {
     if (!settings) return
@@ -18,25 +18,57 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const handleExport = async (type) => {
-    setExporting(type)
-    setExportResult(null)
+  const runAction = async (actionKey, actionFn, successLabel) => {
+    setBusyAction(actionKey)
+    setResult(null)
     try {
-      const folder = await window.api.export.chooseFolder()
-      if (!folder) { setExporting(null); return }
-
-      let result
-      if (type === 'collection') result = await window.api.export.collectionCsv(folder)
-      else if (type === 'breeding') result = await window.api.export.breedingCsv(folder)
-      else if (type === 'backup')   result = await window.api.export.fullBackup(folder)
-
-      setExportResult({ type, ...result })
-    } catch (e) {
-      setExportResult({ type, success: false, error: e.message })
+      const response = await actionFn()
+      if (!response) return
+      setResult({
+        success: response.success !== false,
+        message: response.success === false
+          ? response.error || 'The action could not be completed.'
+          : successLabel(response),
+        errors: response.errors || [],
+      })
+      await refetch().catch(() => {})
+    } catch (error) {
+      setResult({ success: false, message: error.message || 'Something went wrong.', errors: [] })
     } finally {
-      setExporting(null)
+      setBusyAction(null)
     }
   }
+
+  const handleExport = (type) => runAction(
+    `export:${type}`,
+    async () => {
+      const folder = await window.api.export.chooseFolder()
+      if (!folder) return null
+      if (type === 'collection') return window.api.export.collectionCsv(folder)
+      if (type === 'breeding') return window.api.export.breedingCsv(folder)
+      if (type === 'backup') return window.api.export.fullBackup(folder)
+      if (type === 'morphs') return window.api.export.morphsCsv(folder)
+      if (type === 'template') return window.api.export.importTemplateCsv(folder)
+      return null
+    },
+    response => {
+      if (type === 'template') return `Template saved to ${response.path}`
+      return `Saved to ${response.path}${response.count != null ? ` (${response.count} records)` : ''}`
+    }
+  )
+
+  const handleImport = (type) => runAction(
+    `import:${type}`,
+    async () => {
+      const file = await window.api.importData.chooseImportFile()
+      if (!file) return null
+      return window.api.importData.restoreAny(file)
+    },
+    response => {
+      const imported = response.imported != null ? ` (${response.imported} records)` : ''
+      return `${response.message || 'Import completed.'}${imported}`
+    }
+  )
 
   if (loading) return <LoadingSpinner />
 
@@ -47,7 +79,6 @@ export default function SettingsPage() {
         {saved && <span style={{ color: 'var(--accent-text)', fontSize: 13 }}>✓ Saved</span>}
       </div>
 
-      {/* ── Preferences ─────────────────────────────────────── */}
       <section className="settings-section">
         <h2>Preferences</h2>
 
@@ -57,12 +88,14 @@ export default function SettingsPage() {
             <span className="settings-row-sub">Used for incubation temperatures</span>
           </div>
           <div className="filter-group">
-            {[['fahrenheit','°F'],['celsius','°C']].map(([val, label]) => (
+            {[['fahrenheit', '°F'], ['celsius', '°C']].map(([val, label]) => (
               <button
                 key={val}
                 className={`filter-btn ${settings?.temp_unit === val ? 'active' : ''}`}
                 onClick={() => setSetting('temp_unit', val)}
-              >{label}</button>
+              >
+                {label}
+              </button>
             ))}
           </div>
         </div>
@@ -73,12 +106,14 @@ export default function SettingsPage() {
             <span className="settings-row-sub">Used throughout the app</span>
           </div>
           <div className="filter-group">
-            {[['grams','Grams'],['ounces','Ounces']].map(([val, label]) => (
+            {[['grams', 'Grams'], ['ounces', 'Ounces']].map(([val, label]) => (
               <button
                 key={val}
                 className={`filter-btn ${settings?.weight_unit === val ? 'active' : ''}`}
                 onClick={() => setSetting('weight_unit', val)}
-              >{label}</button>
+              >
+                {label}
+              </button>
             ))}
           </div>
         </div>
@@ -90,7 +125,7 @@ export default function SettingsPage() {
           </div>
           <select
             className="form-select"
-            style={{ width: 200 }}
+            style={{ width: 220 }}
             value={settings?.default_species || 'ball_python'}
             onChange={e => setSetting('default_species', e.target.value)}
           >
@@ -105,11 +140,11 @@ export default function SettingsPage() {
         <div className="settings-row">
           <div className="settings-row-label">
             <span>Feeding reminder threshold</span>
-            <span className="settings-row-sub">Days before showing a feeding reminder on dashboard</span>
+            <span className="settings-row-sub">Days before showing a feeding reminder on the dashboard</span>
           </div>
           <select
             className="form-select"
-            style={{ width: 120 }}
+            style={{ width: 140 }}
             value={settings?.feeding_reminder_days || '14'}
             onChange={e => setSetting('feeding_reminder_days', e.target.value)}
           >
@@ -122,11 +157,11 @@ export default function SettingsPage() {
         <div className="settings-row">
           <div className="settings-row-label">
             <span>Weighing reminder threshold</span>
-            <span className="settings-row-sub">Days before showing a weight reminder on dashboard</span>
+            <span className="settings-row-sub">Days before showing a weight reminder on the dashboard</span>
           </div>
           <select
             className="form-select"
-            style={{ width: 120 }}
+            style={{ width: 140 }}
             value={settings?.weighing_reminder_days || '30'}
             onChange={e => setSetting('weighing_reminder_days', e.target.value)}
           >
@@ -137,65 +172,85 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* ── Export ──────────────────────────────────────────── */}
       <section className="settings-section">
         <h2>Export data</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-          Export your data as CSV files or create a full database backup.
-          CSV files open in Excel, Google Sheets, or any spreadsheet app.
+        <p className="settings-helper-copy">
+          Export your live collection, breeding records, custom morph library, full backup database, or a starter CSV template.
         </p>
 
-        {exportResult && (
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: 16,
-            fontSize: 13,
-            background: exportResult.success ? 'var(--accent-dim)' : 'var(--red-dim)',
-            color:      exportResult.success ? 'var(--accent-text)' : 'var(--red-text)',
-            border:     `1px solid ${exportResult.success ? 'var(--accent)' : 'var(--red)'}`,
-          }}>
-            {exportResult.success
-              ? `✓ Exported to: ${exportResult.path}${exportResult.count != null ? ` (${exportResult.count} records)` : ''}`
-              : `✗ Export failed: ${exportResult.error}`
-            }
-          </div>
-        )}
+        <ResultBanner result={result} />
 
         <div className="export-cards">
-          <ExportCard
+          <ActionCard
             title="Collection CSV"
-            description="All animals with morphs, weights, dates, and notes."
+            description="All animals with morphs, dates, weights, and notes. Great for spreadsheet backups."
             icon="🐍"
-            onExport={() => handleExport('collection')}
-            loading={exporting === 'collection'}
+            actionLabel="Export"
+            onAction={() => handleExport('collection')}
+            loading={busyAction === 'export:collection'}
           />
-          <ExportCard
-            title="Breeding records CSV"
-            description="All pairing records with dates, egg counts, and hatch data."
+          <ActionCard
+            title="Breeding CSV"
+            description="All pairing records with dates, egg counts, and hatch totals."
             icon="🥚"
-            onExport={() => handleExport('breeding')}
-            loading={exporting === 'breeding'}
+            actionLabel="Export"
+            onAction={() => handleExport('breeding')}
+            loading={busyAction === 'export:breeding'}
           />
-          <ExportCard
-            title="Full database backup"
-            description="Complete .db backup file. Restores everything — animals, photos references, all records."
+          <ActionCard
+            title="Morph CSV"
+            description="Exports all morph records, including custom user-created morphs, so they can be shared or imported on another setup."
+            icon="🧬"
+            actionLabel="Export"
+            onAction={() => handleExport('morphs')}
+            loading={busyAction === 'export:morphs'}
+          />
+          <ActionCard
+            title="Full backup"
+            description="Creates a database backup you can restore later if you move PCs or want a full snapshot."
             icon="💾"
-            onExport={() => handleExport('backup')}
-            loading={exporting === 'backup'}
+            actionLabel="Backup"
+            onAction={() => handleExport('backup')}
+            loading={busyAction === 'export:backup'}
+            accent
+          />
+          <ActionCard
+            title="CSV template"
+            description="Exports a clean starter template from the resources folder so keepers can fill out their collection in Excel first."
+            icon="📄"
+            actionLabel="Save template"
+            onAction={() => handleExport('template')}
+            loading={busyAction === 'export:template'}
+          />
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2>Import data</h2>
+        <p className="settings-helper-copy">
+          Import any file exported by ReptiLogic: collection CSV, breeding CSV, morph CSV, or a full database backup. Collection spreadsheets can still be imported from CSV as well.
+        </p>
+
+        <div className="export-cards">
+          <ActionCard
+            title="Import or restore export file"
+            description="Choose any exported ReptiLogic file — collection, breeding, morphs, or full backup — and the app will detect the format automatically."
+            icon="📥"
+            actionLabel="Choose file"
+            onAction={() => handleImport('restore')}
+            loading={busyAction === 'import:restore'}
             accent
           />
         </div>
       </section>
 
-      {/* ── About ───────────────────────────────────────────── */}
       <section className="settings-section">
         <h2>About</h2>
-        <div className="card" style={{ maxWidth: 480 }}>
+        <div className="card" style={{ maxWidth: 520 }}>
           <table style={{ width: '100%', fontSize: 13 }}>
             <tbody>
               <tr><td style={{ color: 'var(--text-muted)', padding: '5px 0', paddingRight: 16 }}>App</td><td>ReptiLogic</td></tr>
-              <tr><td style={{ color: 'var(--text-muted)', padding: '5px 0', paddingRight: 16 }}>Version</td><td>0.1.0</td></tr>
+              <tr><td style={{ color: 'var(--text-muted)', padding: '5px 0', paddingRight: 16 }}>Version</td><td>1.0.0</td></tr>
               <tr><td style={{ color: 'var(--text-muted)', padding: '5px 0', paddingRight: 16 }}>Ball python morphs</td><td>130+ genes in database</td></tr>
               <tr><td style={{ color: 'var(--text-muted)', padding: '5px 0', paddingRight: 16 }}>Hognose morphs</td><td>25+ genes in database</td></tr>
               <tr><td style={{ color: 'var(--text-muted)', padding: '5px 0', paddingRight: 16 }}>Species supported</td><td>10 (more via migration)</td></tr>
@@ -208,7 +263,23 @@ export default function SettingsPage() {
   )
 }
 
-function ExportCard({ title, description, icon, onExport, loading, accent }) {
+function ResultBanner({ result }) {
+  if (!result) return null
+
+  return (
+    <div className={`settings-result ${result.success ? 'settings-result-success' : 'settings-result-error'}`}>
+      <div>{result.success ? '✓' : '✗'} {result.message}</div>
+      {result.errors?.length > 0 && (
+        <ul className="settings-result-errors">
+          {result.errors.slice(0, 8).map(error => <li key={error}>{error}</li>)}
+          {result.errors.length > 8 && <li>...and {result.errors.length - 8} more.</li>}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function ActionCard({ title, description, icon, actionLabel, onAction, loading, accent = false }) {
   return (
     <div className={`export-card ${accent ? 'export-card-accent' : ''}`}>
       <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
@@ -216,11 +287,11 @@ function ExportCard({ title, description, icon, onExport, loading, accent }) {
       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, flex: 1 }}>{description}</p>
       <button
         className={`btn ${accent ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-        onClick={onExport}
+        onClick={onAction}
         disabled={loading}
         style={{ alignSelf: 'flex-start' }}
       >
-        {loading ? 'Exporting…' : 'Export'}
+        {loading ? 'Working…' : actionLabel}
       </button>
     </div>
   )

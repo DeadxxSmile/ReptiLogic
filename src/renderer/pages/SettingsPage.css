@@ -67,3 +67,37 @@
   border-color: var(--accent-dim);
   background:   var(--accent-dim);
 }
+
+.settings-helper-copy {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.settings-result {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.settings-result-success {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+  border: 1px solid var(--accent);
+}
+
+.settings-result-error {
+  background: var(--red-dim);
+  color: var(--red-text);
+  border: 1px solid var(--red);
+}
+
+.settings-result-errors {
+  margin: 10px 0 0 16px;
+  padding: 0;
+}
+
+.settings-result-errors li {
+  margin-bottom: 4px;
+}
