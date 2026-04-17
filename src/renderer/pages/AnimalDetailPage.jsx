@@ -8,7 +8,7 @@ import {
 import { ageString, formatDate, formatDateShort, formatWeight, timeAgo, pluralise } from '../utils/format'
 import './AnimalDetailPage.css'
 
-const TABS = ['Overview', 'Breeding history', 'Weight log', 'Feeding log', 'Photos']
+const TABS = ['Overview', 'Lineage', 'Breeding history', 'Weight log', 'Feeding log', 'Photos']
 
 export default function AnimalDetailPage() {
   const { id }   = useParams()
@@ -17,19 +17,39 @@ export default function AnimalDetailPage() {
   const { data: animal, loading, error, refetch } = useAnimal(id)
   const { data: history } = useAsync(() => window.api.animals.getHistory(id), [id])
 
-  const [tab,     setTab]     = useState('Overview')
-  const [confirm, setConfirm] = useState(false)
+  const [tab,        setTab]        = useState('Overview')
+  const [confirm,    setConfirm]    = useState(false)
+  const [printing,   setPrinting]   = useState(false)
+  const [printError, setPrintError] = useState(null)
 
   const handleDelete = async () => {
     await window.api.animals.delete(id)
     navigate('/collection')
   }
 
+  const handlePrint = async () => {
+    setPrinting(true)
+    setPrintError(null)
+    try {
+      const result = await window.api.print.husbandryReport(id)
+      if (!result.success) { setPrintError(result.error); return }
+      // Open in a new window for printing
+      const win = window.open('', '_blank', 'width=900,height=700')
+      win.document.write(result.html)
+      win.document.close()
+      setTimeout(() => win.print(), 600)
+    } catch (e) {
+      setPrintError(e.message)
+    } finally {
+      setPrinting(false)
+    }
+  }
+
   if (loading) return <LoadingSpinner label="Loading animal…" />
   if (error)   return <PageError message={error} />
   if (!animal) return <PageError message="Animal not found." />
 
-  const latestWeight = animal.measurements?.[0]
+  const latestWeight  = animal.measurements?.[0]
   const breedingCount = history?.breedingRecords?.length || 0
 
   return (
@@ -50,12 +70,8 @@ export default function AnimalDetailPage() {
         <button className="btn btn-ghost btn-sm" onClick={() => navigate('/collection')}>← Collection</button>
 
         <div className="detail-hero">
-          <AnimalPhoto
-            filename={animal.primary_photo_filename}
-            name={animal.name}
-            size={100}
-            style={{ borderRadius: 'var(--radius-lg)' }}
-          />
+          <AnimalPhoto filename={animal.primary_photo_filename} name={animal.name} size={100}
+            style={{ borderRadius: 'var(--radius-lg)' }} />
 
           <div className="detail-hero-info">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -63,20 +79,31 @@ export default function AnimalDetailPage() {
               <SexBadge sex={animal.sex} />
               <StatusBadge status={animal.status} />
               {animal.dob_estimated && (
-                <span className="badge" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
-                  ~estimated DOB
-                </span>
+                <span className="badge" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>~estimated DOB</span>
               )}
             </div>
+
+            {animal.animal_id && (
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent-text)', marginTop: 2, letterSpacing: '0.05em' }}>
+                ID: {animal.animal_id}
+              </div>
+            )}
 
             <div style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 2 }}>
               {animal.species_name}
               {animal.scientific_name && <em style={{ color: 'var(--text-muted)' }}> · {animal.scientific_name}</em>}
             </div>
 
+            {(animal.father_name || animal.mother_name) && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                {animal.father_name && <span>♂ {animal.father_name}</span>}
+                {animal.father_name && animal.mother_name && <span style={{ margin: '0 6px' }}>×</span>}
+                {animal.mother_name && <span>♀ {animal.mother_name}</span>}
+              </div>
+            )}
+
             <MorphTagList morphs={animal.morphs || []} style={{ marginTop: 8 }} />
 
-            {/* Health warnings */}
             {animal.morphs?.some(m => m.has_health_concern) && (
               <div className="health-warning">
                 ⚠ {animal.morphs.filter(m => m.has_health_concern).map(m => m.health_concern_desc).filter(Boolean).join(' · ')}
@@ -85,34 +112,29 @@ export default function AnimalDetailPage() {
           </div>
 
           <div className="detail-hero-actions">
+            <button className="btn btn-secondary btn-sm" onClick={handlePrint} disabled={printing} title="Print husbandry report">
+              {printing ? '⏳' : '🖨️'} Print
+            </button>
             <button className="btn btn-secondary" onClick={() => navigate(`/collection/${id}/edit`)}>Edit</button>
             <button className="btn btn-ghost" style={{ color: 'var(--text-muted)' }} onClick={() => setConfirm(true)}>Delete</button>
           </div>
         </div>
+        {printError && (
+          <div style={{ background: 'var(--red-dim)', color: 'var(--red-text)', padding: '8px 14px', borderRadius: 'var(--radius-md)', marginTop: 8, fontSize: 13 }}>
+            Print failed: {printError}
+          </div>
+        )}
       </div>
 
       {/* ── Stat tiles ──────────────────────────────────────── */}
       <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        <StatTile
-          label="Age"
-          value={ageString(animal.dob)}
-          sub={animal.dob ? formatDate(animal.dob) : 'No DOB recorded'}
-        />
-        <StatTile
-          label="Weight"
-          value={formatWeight(latestWeight?.weight_grams || animal.weight_grams)}
-          sub={latestWeight ? `Recorded ${timeAgo(latestWeight.measured_at)}` : 'No measurements'}
-        />
-        <StatTile
-          label="Breeding records"
-          value={breedingCount}
-          sub={breedingCount > 0 ? 'View breeding history' : 'No breeding recorded'}
-        />
-        <StatTile
-          label="Acquired"
-          value={animal.acquired_date ? formatDate(animal.acquired_date, 'MMM yyyy') : '—'}
-          sub={animal.acquired_from || 'Source unknown'}
-        />
+        <StatTile label="Age" value={ageString(animal.dob)} sub={animal.dob ? formatDate(animal.dob) : 'No DOB recorded'} />
+        <StatTile label="Weight" value={formatWeight(latestWeight?.weight_grams || animal.weight_grams)}
+          sub={latestWeight ? `Recorded ${timeAgo(latestWeight.measured_at)}` : 'No measurements'} />
+        <StatTile label="Breeding records" value={breedingCount}
+          sub={breedingCount > 0 ? 'View breeding history' : 'No breeding recorded'} />
+        <StatTile label="Acquired" value={animal.acquired_date ? formatDate(animal.acquired_date, 'MMM yyyy') : '—'}
+          sub={animal.acquired_from || 'Source unknown'} />
       </div>
 
       {/* ── Tabs ────────────────────────────────────────────── */}
@@ -126,11 +148,81 @@ export default function AnimalDetailPage() {
 
       <div className="tab-content">
         {tab === 'Overview'           && <OverviewTab animal={animal} />}
+        {tab === 'Lineage'            && <LineageTab animalId={id} />}
         {tab === 'Breeding history'   && <BreedingHistoryTab history={history} animal={animal} />}
         {tab === 'Weight log'         && <WeightLogTab animal={animal} refetch={refetch} />}
         {tab === 'Feeding log'        && <FeedingLogTab animal={animal} refetch={refetch} />}
         {tab === 'Photos'             && <PhotosTab animal={animal} refetch={refetch} />}
       </div>
+    </div>
+  )
+}
+
+// ── Lineage tab ───────────────────────────────────────────────────────────────
+function LineageTab({ animalId }) {
+  const { data: lineage, loading } = useAsync(() => window.api.animals.getLineage(animalId), [animalId])
+
+  if (loading) return <LoadingSpinner />
+  if (!lineage) return <EmptyState icon="🌳" message="No lineage data found." />
+
+  return (
+    <div>
+      <h3 style={{ marginBottom: 16 }}>Family Tree</h3>
+      <LineageNode node={lineage} depth={0} isSelf />
+    </div>
+  )
+}
+
+function LineageNode({ node, depth, isSelf }) {
+  const navigate = useNavigate()
+  if (!node) return null
+
+  const sexColor = node.sex === 'male' ? 'var(--blue-text)' : node.sex === 'female' ? 'var(--purple-text)' : 'var(--text-muted)'
+  const sexIcon  = node.sex === 'male' ? '♂' : node.sex === 'female' ? '♀' : '?'
+
+  return (
+    <div style={{ paddingLeft: depth * 28, marginBottom: 8 }}>
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        background: isSelf ? 'var(--accent-dim)' : 'var(--surface-2)',
+        border: `1px solid ${isSelf ? 'var(--accent)' : 'var(--border)'}`,
+        borderRadius: 'var(--radius-md)', padding: '8px 14px',
+        cursor: node.id && !isSelf ? 'pointer' : 'default',
+        transition: 'opacity .15s',
+      }}
+        onClick={() => !isSelf && node.id && navigate(`/collection/${node.id}`)}
+      >
+        <span style={{ color: sexColor, fontWeight: 700 }}>{sexIcon}</span>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>{node.name || 'Unknown'}</div>
+          {node.animal_id && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}>{node.animal_id}</div>}
+          {node.morph_summary && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{node.morph_summary}</div>}
+        </div>
+        {isSelf && <span style={{ fontSize: 11, color: 'var(--accent-text)', marginLeft: 4 }}>← this animal</span>}
+      </div>
+
+      {(node.father || node.mother) && (
+        <div style={{ marginTop: 4 }}>
+          {node.father && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 13, marginRight: 4, paddingTop: 9 }}>├─</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2, paddingLeft: 28 }}>Sire</div>
+                <LineageNode node={node.father} depth={depth + 1} />
+              </div>
+            </div>
+          )}
+          {node.mother && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 13, marginRight: 4, paddingTop: 9 }}>└─</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2, paddingLeft: 28 }}>Dam</div>
+                <LineageNode node={node.mother} depth={depth + 1} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

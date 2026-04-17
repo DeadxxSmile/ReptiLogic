@@ -67,6 +67,19 @@ function createWindow() {
   win.on('maximize',   () => win.webContents.send('window:maximized', true))
   win.on('unmaximize', () => win.webContents.send('window:maximized', false))
 
+  // ── Backup on close ────────────────────────────────────────────────────────
+  win.on('close', async (e) => {
+    try {
+      const backupHandlers = require('./ipc/backupHandlers')
+      const settings = backupHandlers.getSettings()
+      if (settings.backup_enabled === '1' && settings.backup_trigger === 'on_close' && settings.backup_folder) {
+        await backupHandlers.runBackup(settings.backup_folder)
+      }
+    } catch (err) {
+      console.error('[Backup] on-close backup failed:', err.message)
+    }
+  })
+
   if (isDev) {
     win.loadURL(devServerUrl)
     if (shouldOpenDevTools) win.webContents.openDevTools({ mode: 'detach' })
@@ -74,7 +87,21 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '../../build/index.html'))
   }
 
-  win.once('ready-to-show', () => win.show())
+  win.once('ready-to-show', () => {
+    win.show()
+    // ── Backup on open ───────────────────────────────────────────────────────
+    setTimeout(async () => {
+      try {
+        const backupHandlers = require('./ipc/backupHandlers')
+        const settings = backupHandlers.getSettings()
+        if (settings.backup_enabled === '1' && settings.backup_trigger === 'on_open' && settings.backup_folder) {
+          await backupHandlers.runBackup(settings.backup_folder)
+        }
+      } catch (err) {
+        console.error('[Backup] on-open backup failed:', err.message)
+      }
+    }, 2000)
+  })
 }
 
 app.whenReady().then(() => {
@@ -103,6 +130,8 @@ const breedingHandlers = require('./ipc/breedingHandlers')
 const utilHandlers     = require('./ipc/utilHandlers')
 const exportHandlers   = require('./ipc/exportHandlers')
 const healthHandlers   = require('./ipc/healthHandlers')
+const backupHandlers   = require('./ipc/backupHandlers')
+const printHandlers    = require('./ipc/printHandlers')
 
 try {
   animalHandlers.register(ipcMain)
@@ -111,8 +140,11 @@ try {
   utilHandlers.register(ipcMain, dialog)
   exportHandlers.register(ipcMain, dialog)
   healthHandlers.register(ipcMain)
+  backupHandlers.register(ipcMain, dialog, app)
+  printHandlers.register(ipcMain, dialog)
 } catch (err) {
   console.error('[IPC] Failed to register handlers:', err)
   dialog.showErrorBox('Startup error', 'Failed to register IPC handlers: ' + err.message)
   app.quit()
 }
+

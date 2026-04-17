@@ -1,18 +1,19 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import App              from './renderer/App'
-import DashboardPage    from './renderer/pages/DashboardPage'
-import CollectionsPage  from './renderer/pages/CollectionsPage'
-import AnimalDetailPage from './renderer/pages/AnimalDetailPage'
-import AddAnimalPage    from './renderer/pages/AddAnimalPage'
-import BreedingPage     from './renderer/pages/BreedingPage'
+import App                from './renderer/App'
+import DashboardPage      from './renderer/pages/DashboardPage'
+import CollectionsPage    from './renderer/pages/CollectionsPage'
+import AnimalDetailPage   from './renderer/pages/AnimalDetailPage'
+import AddAnimalPage      from './renderer/pages/AddAnimalPage'
+import BreedingPage       from './renderer/pages/BreedingPage'
 import BreedingDetailPage from './renderer/pages/BreedingDetailPage'
-import GeneticsPage     from './renderer/pages/GeneticsPage'
-import MorphLibraryPage from './renderer/pages/MorphLibraryPage'
-import AddMorphPage     from './renderer/pages/AddMorphPage'
-import SettingsPage     from './renderer/pages/SettingsPage'
-import HealthPage       from './renderer/pages/HealthPage'
+import GeneticsPage       from './renderer/pages/GeneticsPage'
+import MorphLibraryPage   from './renderer/pages/MorphLibraryPage'
+import AddMorphPage       from './renderer/pages/AddMorphPage'
+import SettingsPage       from './renderer/pages/SettingsPage'
+import HealthPage         from './renderer/pages/HealthPage'
+import AnimalLibraryPage  from './renderer/pages/AnimalLibraryPage'
 import './renderer/styles/global.css'
 import './renderer/styles/shared.css'
 
@@ -24,9 +25,9 @@ import './renderer/styles/shared.css'
   } catch (_) {}
 })()
 
-const root = ReactDOM.createRoot(document.getElementById('root'))
+const appRoot = ReactDOM.createRoot(document.getElementById('root'))
 
-root.render(
+appRoot.render(
   <React.StrictMode>
     <HashRouter>
       <Routes>
@@ -42,6 +43,7 @@ root.render(
           <Route path="genetics"            element={<GeneticsPage />} />
           <Route path="morphs"              element={<MorphLibraryPage />} />
           <Route path="morphs/add"          element={<AddMorphPage />} />
+          <Route path="library"             element={<AnimalLibraryPage />} />
           <Route path="health"              element={<HealthPage />} />
           <Route path="settings"            element={<SettingsPage />} />
         </Route>

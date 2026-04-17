@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useBreedingRecord } from '../hooks/useData'
+import { useBreedingRecord, useAsync } from '../hooks/useData'
 import {
   AnimalPhoto, BreedingStatusBadge, LoadingSpinner, PageError, EmptyState, StatTile
 } from '../components/shared'
@@ -9,6 +9,13 @@ import { formatDate, formatDateShort, pluralise } from '../utils/format'
 import './BreedingDetailPage.css'
 
 const STATUS_FLOW = ['planned', 'active', 'gravid', 'laid', 'hatched']
+
+// Return a display label for a status value, aware of live-birth species
+function statusFlowLabel(s, isLiveBirth) {
+  if (s === 'laid')    return isLiveBirth ? 'Laid / Born'     : 'Laid'
+  if (s === 'hatched') return isLiveBirth ? 'Hatched / Born'  : 'Hatched'
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
 export default function BreedingDetailPage() {
   const { id }   = useParams()
@@ -88,10 +95,10 @@ export default function BreedingDetailPage() {
                 className={`pipeline-step ${isActive ? 'pipeline-active' : ''} ${isComplete ? 'pipeline-complete' : ''}`}
                 onClick={() => isNext && updateStatus(s)}
                 disabled={!isNext && !isActive}
-                title={isNext ? `Mark as ${s}` : undefined}
+                title={isNext ? `Mark as ${statusFlowLabel(s, record.gives_live_birth)}` : undefined}
               >
                 <span className="pipeline-dot" />
-                <span className="pipeline-label">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
+                <span className="pipeline-label">{statusFlowLabel(s, record.gives_live_birth)}</span>
               </button>
               {i < STATUS_FLOW.length - 1 && <div className={`pipeline-connector ${isComplete ? 'complete' : ''}`} />}
             </React.Fragment>
@@ -192,24 +199,34 @@ export default function BreedingDetailPage() {
 }
 
 // ── Clutch card ───────────────────────────────────────────────────────────────
-function ClutchCard({ clutch: c, onUpdate }) {
+function ClutchCard({ clutch: c, breedingId, onUpdate }) {
   const fertile    = (c.total_eggs || 0) - (c.slug_count || 0)
   const successPct = c.total_eggs > 0 ? Math.round((c.hatched_count || 0) / c.total_eggs * 100) : 0
+  const [showWizard, setShowWizard] = useState(false)
+
+  // Determine terminology based on is_live_birth flag
+  const isLiveBirth = Boolean(c.is_live_birth)
+  const eggWord     = isLiveBirth ? 'Young' : 'Eggs'
+  const slugWord    = isLiveBirth ? 'Stillborn' : 'Slugs'
+  const hatchWord   = isLiveBirth ? 'Born' : 'Hatched'
 
   return (
     <div className="card clutch-card">
       <div className="clutch-card-header">
         <div>
-          <h4 style={{ marginBottom: 4 }}>Clutch</h4>
+          <h4 style={{ marginBottom: 4 }}>
+            {isLiveBirth ? '🐣 Litter' : '🥚 Clutch'}
+          </h4>
           <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
-            {c.lay_date   && <span>Laid: <strong>{formatDate(c.lay_date)}</strong></span>}
+            {c.lay_date   && <span>{isLiveBirth ? 'Born' : 'Laid'}: <strong>{formatDate(c.lay_date)}</strong></span>}
             {c.hatch_date && <span>Hatched: <strong>{formatDate(c.hatch_date)}</strong></span>}
+            {c.birth_date && <span>Birth date: <strong>{formatDate(c.birth_date)}</strong></span>}
           </div>
         </div>
         <div className="clutch-counts">
-          <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700 }}>{c.total_eggs || 0}</span><span>Total eggs</span></div>
-          <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700, color: 'var(--red-text)' }}>{c.slug_count || 0}</span><span>Slugs</span></div>
-          <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-text)' }}>{c.hatched_count || 0}</span><span>Hatched</span></div>
+          <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700 }}>{c.total_eggs || 0}</span><span>{eggWord}</span></div>
+          <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700, color: 'var(--red-text)' }}>{c.slug_count || 0}</span><span>{slugWord}</span></div>
+          <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-text)' }}>{c.hatched_count || 0}</span><span>{hatchWord}</span></div>
           {c.hatched_count > 0 && <div className="clutch-stat"><span style={{ fontSize: 22, fontWeight: 700, color: 'var(--amber-text)' }}>{successPct}%</span><span>Success</span></div>}
         </div>
       </div>
@@ -220,7 +237,297 @@ function ClutchCard({ clutch: c, onUpdate }) {
         </div>
       )}
       {c.notes && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, fontStyle: 'italic' }}>{c.notes}</div>}
-      <OffspringPanel clutch={c} />
+
+      {/* Add babies button */}
+      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowWizard(true)}>
+          🐍 Add babies to collection
+        </button>
+      </div>
+
+      {showWizard && (
+        <AddBabiesWizard
+          clutch={c}
+          breedingId={breedingId}
+          onClose={() => setShowWizard(false)}
+          onDone={() => { setShowWizard(false); onUpdate() }}
+        />
+      )}
+
+      <OffspringPanel clutch={c} onUpdate={onUpdate} />
+    </div>
+  )
+}
+
+// ── Add Babies Wizard ─────────────────────────────────────────────────────────
+function AddBabiesWizard({ clutch, breedingId, onClose, onDone }) {
+  const { data: speciesList } = useAsync(() => window.api.species.getAll(), [])
+  const { data: breedingRecord } = useAsync(() => window.api.breeding.getById(breedingId), [breedingId])
+  const speciesId = breedingRecord?.species_id || 'ball_python'
+
+  const { data: morphList } = useAsync(
+    () => speciesId ? window.api.morphs.getBySpecies(speciesId) : Promise.resolve([]),
+    [speciesId]
+  )
+
+  const [babies, setBabies] = useState([])
+  const [currentIdx, setCurrentIdx] = useState(null) // null = list view, number = editing that baby
+  const [saving, setSaving] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
+  const [errors, setErrors] = useState([])
+
+  const blankBaby = () => ({
+    name: '', sex: 'unknown', dob: clutch.hatch_date || clutch.lay_date || '',
+    weight_grams: '', notes: '', morphs: [], animal_id: '', idMode: 'auto',
+    _tempId: Math.random().toString(36).slice(2),
+  })
+
+  const addBaby = () => {
+    const nb = blankBaby()
+    setBabies(prev => [...prev, nb])
+    setCurrentIdx(babies.length)
+  }
+
+  const updateBaby = (idx, field, val) => {
+    setBabies(prev => prev.map((b, i) => i === idx ? { ...b, [field]: val } : b))
+  }
+
+  const removeBaby = (idx) => {
+    setBabies(prev => prev.filter((_, i) => i !== idx))
+    if (currentIdx === idx) setCurrentIdx(null)
+  }
+
+  const handleSaveAll = async () => {
+    setSaving(true)
+    const errs = []
+    let saved = 0
+    for (const [i, baby] of babies.entries()) {
+      if (!baby.name.trim()) { errs.push(`Baby ${i + 1}: name required`); continue }
+      try {
+        // First create offspring record
+        const offspring = await window.api.offspring.add(clutch.id, {
+          sex: baby.sex,
+          hatch_date: baby.dob || null,
+          hatch_weight_grams: baby.weight_grams ? Number(baby.weight_grams) : null,
+          disposition: 'kept',
+        })
+        // Then convert to full animal
+        await window.api.offspring.addToCollection(offspring.id, {
+          name:        baby.name,
+          sex:         baby.sex,
+          dob:         baby.dob || null,
+          weight_grams: baby.weight_grams ? Number(baby.weight_grams) : null,
+          notes:       baby.notes || null,
+          animal_id:   baby.idMode === 'manual' ? baby.animal_id || null : null,
+          morphs:      baby.morphs || [],
+        })
+        saved++
+      } catch (e) {
+        errs.push(`Baby ${i + 1} (${baby.name}): ${e.message}`)
+      }
+    }
+    setSaving(false)
+    setSavedCount(saved)
+    setErrors(errs)
+    if (saved > 0 && errs.length === 0) onDone()
+  }
+
+  const currentBaby = currentIdx !== null ? babies[currentIdx] : null
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)', width: 640, maxHeight: '85vh',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ marginBottom: 2 }}>Add babies to collection</h3>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Step through each baby and set their details. Parents are linked automatically.
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+
+        <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+          {currentBaby === null ? (
+            // ── List view ──────────────────────────────────────────────────────
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                  {babies.length === 0 ? 'No babies added yet' : `${babies.length} baby${babies.length !== 1 ? 'ies' : ''} ready to add`}
+                </span>
+                <button className="btn btn-primary btn-sm" onClick={addBaby}>+ Add baby</button>
+              </div>
+
+              {babies.map((b, i) => (
+                <div key={b._tempId} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)', padding: '10px 14px', marginBottom: 8,
+                }}>
+                  <span style={{ fontSize: 18 }}>{b.sex === 'male' ? '♂' : b.sex === 'female' ? '♀' : '?'}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{b.name || <em style={{ color: 'var(--text-muted)' }}>Unnamed</em>}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      {b.morphs?.length > 0 ? b.morphs.map(m => m.morph_name).join(', ') : 'Normal'}
+                      {b.weight_grams ? ` · ${b.weight_grams}g` : ''}
+                    </div>
+                  </div>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setCurrentIdx(i)}>Edit</button>
+                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }} onClick={() => removeBaby(i)}>✕</button>
+                </div>
+              ))}
+
+              {errors.length > 0 && (
+                <div style={{ background: 'var(--red-dim)', color: 'var(--red-text)', padding: '10px 14px', borderRadius: 'var(--radius-md)', marginTop: 12, fontSize: 13 }}>
+                  {errors.map((e, i) => <div key={i}>{e}</div>)}
+                </div>
+              )}
+              {savedCount > 0 && (
+                <div style={{ background: 'var(--accent-dim)', color: 'var(--accent-text)', padding: '10px 14px', borderRadius: 'var(--radius-md)', marginTop: 12, fontSize: 13 }}>
+                  ✓ {savedCount} animal{savedCount !== 1 ? 's' : ''} added to collection!
+                </div>
+              )}
+            </div>
+          ) : (
+            // ── Baby edit view ──────────────────────────────────────────────────
+            <BabyForm
+              baby={currentBaby}
+              morphList={morphList || []}
+              onChange={(field, val) => updateBaby(currentIdx, field, val)}
+              onBack={() => setCurrentIdx(null)}
+              onNext={() => {
+                if (currentIdx < babies.length - 1) setCurrentIdx(currentIdx + 1)
+                else setCurrentIdx(null)
+              }}
+              isLast={currentIdx === babies.length - 1}
+              number={currentIdx + 1}
+              total={babies.length}
+            />
+          )}
+        </div>
+
+        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          {currentBaby === null && babies.length > 0 && (
+            <button className="btn btn-primary" onClick={handleSaveAll} disabled={saving}>
+              {saving ? 'Saving…' : `Add ${babies.length} baby${babies.length !== 1 ? 'ies' : ''} to collection`}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BabyForm({ baby, morphList, onChange, onBack, onNext, isLast, number, total }) {
+  const [morphSearch, setMorphSearch] = useState('')
+  const set = (k, v) => onChange(k, v)
+
+  const filteredMorphs = (morphList || []).filter(m =>
+    !baby.morphs?.find(s => s.morph_id === m.id) &&
+    (!morphSearch || m.name.toLowerCase().includes(morphSearch.toLowerCase()))
+  )
+
+  const addMorph = (m) => set('morphs', [...(baby.morphs || []), { morph_id: m.id, morph_name: m.name, expression: 'visual', het_percent: null }])
+  const removeMorph = (mid) => set('morphs', (baby.morphs || []).filter(m => m.morph_id !== mid))
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h4>Baby {number} of {total}</h4>
+        <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back to list</button>
+      </div>
+
+      <div className="grid-2" style={{ gap: 12, marginBottom: 12 }}>
+        <div className="form-group">
+          <label className="form-label">Name *</label>
+          <input className="form-input" value={baby.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Hatchling #1, Ghost Jr." />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Sex</label>
+          <div className="radio-group">
+            {['male','female','unknown'].map(s => (
+              <label key={s} className={`radio-btn ${baby.sex === s ? 'selected' : ''}`}>
+                <input type="radio" checked={baby.sex === s} onChange={() => set('sex', s)} />
+                {s === 'male' ? '♂' : s === 'female' ? '♀' : '?'}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Hatch / Birth date</label>
+          <input type="date" className="form-input" value={baby.dob} onChange={e => set('dob', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Weight (grams)</label>
+          <input type="number" className="form-input" value={baby.weight_grams} onChange={e => set('weight_grams', e.target.value)} placeholder="Hatch weight" min="0" />
+        </div>
+      </div>
+
+      <div className="form-group" style={{ marginBottom: 14 }}>
+        <label className="form-label">Notes</label>
+        <input className="form-input" value={baby.notes} onChange={e => set('notes', e.target.value)} placeholder="Any notes about this baby" />
+      </div>
+
+      <div className="form-group" style={{ marginBottom: 14 }}>
+        <label className="form-label">Animal ID</label>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          {['auto', 'manual'].map(m => (
+            <label key={m} className={`radio-btn ${baby.idMode === m ? 'selected' : ''}`} style={{ flex: 1, justifyContent: 'center', fontSize: 12 }}>
+              <input type="radio" checked={baby.idMode === m} onChange={() => set('idMode', m)} />
+              {m === 'auto' ? '⚡ Auto' : '✏️ Manual'}
+            </label>
+          ))}
+        </div>
+        {baby.idMode === 'manual' && (
+          <input className="form-input" value={baby.animal_id} onChange={e => set('animal_id', e.target.value)} placeholder="Custom ID" style={{ fontFamily: 'var(--font-mono)' }} />
+        )}
+      </div>
+
+      {/* Morphs */}
+      <div className="form-group">
+        <label className="form-label">Morphs</label>
+        {(baby.morphs || []).length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            {baby.morphs.map(m => (
+              <span key={m.morph_id} style={{
+                background: 'var(--accent-dim)', color: 'var(--accent-text)',
+                border: '1px solid var(--accent)', borderRadius: 12, padding: '2px 10px', fontSize: 12,
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                {m.morph_name}
+                <button onClick={() => removeMorph(m.morph_id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
+        <input className="form-input" placeholder="Search morphs to add…" value={morphSearch}
+          onChange={e => setMorphSearch(e.target.value)} style={{ marginBottom: 6 }} />
+        {morphSearch && (
+          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', maxHeight: 160, overflowY: 'auto' }}>
+            {filteredMorphs.slice(0, 20).map(m => (
+              <button key={m.id} onClick={() => { addMorph(m); setMorphSearch('') }}
+                style={{ width: '100%', textAlign: 'left', padding: '7px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--text-primary)' }}>
+                {m.name}
+              </button>
+            ))}
+            {filteredMorphs.length === 0 && <div style={{ padding: '8px 12px', color: 'var(--text-muted)', fontSize: 13 }}>No morphs found</div>}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+        <button className="btn btn-primary btn-sm" onClick={onNext}>
+          {isLast ? 'Done ✓' : `Next baby →`}
+        </button>
+      </div>
     </div>
   )
 }
