@@ -2,15 +2,15 @@
 
 > A desktop application for reptile breeders and collectors to manage their animals, track breeding seasons, calculate offspring genetics, and monitor animal health — all stored locally on your machine.
 
-[![Release](https://img.shields.io/github/v/release/DeadxxSmile/ReptiLogic)](https://github.com/DeadxxSmile/ReptiLogic/releases/latest)
+[![Release](https://img.shields.io/github/v/release/DeadxxSmile/reptilogic)](https://github.com/DeadxxSmile/reptilogic/releases/latest)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/DeadxxSmile/ReptiLogic/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/DeadxxSmile/reptilogic/releases/latest)
 
 ---
 
 ## 📦 Installation
 
-Download the latest installer from the [Releases page](https://github.com/DeadxxSmile/ReptiLogic/releases/latest).
+Download the latest installer from the [Releases page](https://github.com/DeadxxSmile/reptilogic/releases/latest).
 
 1. Download `ReptiLogic-Setup-1.0.0.exe`
 2. Run the installer — choose your install location and create shortcuts
@@ -63,7 +63,7 @@ No additional software required for the installed version.
 
 ## 📦 Getting the installer
 
-Head to the [**Releases page**](https://github.com/DeadxxSmile/ReptiLogic/releases/latest) and download the `.exe` from the latest release. Run it and follow the installer wizard — it will ask where to install and optionally create desktop and Start Menu shortcuts.
+Head to the [**Releases page**](https://github.com/DeadxxSmile/reptilogic/releases/latest) and download the `.exe` from the latest release. Run it and follow the installer wizard — it will ask where to install and optionally create desktop and Start Menu shortcuts.
 
 ---
 
@@ -77,7 +77,7 @@ Head to the [**Releases page**](https://github.com/DeadxxSmile/ReptiLogic/releas
 ### Setup
 
 ```bash
-git clone https://github.com/DeadxxSmile/ReptiLogic.git
+git clone https://github.com/DeadxxSmile/reptilogic.git
 cd reptilogic
 npm install
 npm start

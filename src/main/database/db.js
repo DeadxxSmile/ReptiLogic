@@ -1,15 +1,53 @@
+'use strict'
+
 const path = require('path')
 const fs   = require('fs')
 const { app } = require('electron')
 
 let _db = null
 
-function getDbPath() {
+// ── Path resolution ───────────────────────────────────────────────────────────
+// Custom path is stored in a tiny JSON sidecar next to the default DB location.
+// This avoids the chicken-and-egg problem of reading the DB to find the DB path.
+
+function getConfigPath() {
+  const base = app.isPackaged
+    ? app.getPath('userData')
+    : path.join(__dirname, '../../../')
+  return path.join(base, 'reptilogic-config.json')
+}
+
+function readConfig() {
+  try {
+    const raw = fs.readFileSync(getConfigPath(), 'utf8')
+    return JSON.parse(raw)
+  } catch (_) {
+    return {}
+  }
+}
+
+function writeConfig(data) {
+  const current = readConfig()
+  fs.writeFileSync(getConfigPath(), JSON.stringify({ ...current, ...data }, null, 2), 'utf8')
+}
+
+function getDefaultDbPath() {
   const base = app.isPackaged
     ? app.getPath('userData')
     : path.join(__dirname, '../../../')
   return path.join(base, 'reptilogic.db')
 }
+
+function getDbPath() {
+  const cfg = readConfig()
+  return cfg.db_path || getDefaultDbPath()
+}
+
+function setDbPath(newPath) {
+  writeConfig({ db_path: newPath })
+}
+
+// ── DB access ─────────────────────────────────────────────────────────────────
 
 function getDb() {
   if (!_db) throw new Error('Database not initialized. Call initialize() first.')
@@ -20,7 +58,7 @@ function initialize() {
   if (_db) return _db
 
   const Database = require('better-sqlite3')
-  const dbPath = getDbPath()
+  const dbPath   = getDbPath()
   const isVerbose = !app.isPackaged && process.env.DEBUG_SQL === 'true'
 
   fs.mkdirSync(path.dirname(dbPath), { recursive: true })
@@ -37,10 +75,7 @@ function initialize() {
 }
 
 function close() {
-  if (_db) {
-    _db.close()
-    _db = null
-  }
+  if (_db) { _db.close(); _db = null }
 }
 
 function runMigrations() {
@@ -49,8 +84,8 @@ function runMigrations() {
 
   _db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
-      id        INTEGER PRIMARY KEY AUTOINCREMENT,
-      filename  TEXT NOT NULL UNIQUE,
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename   TEXT NOT NULL UNIQUE,
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `)
@@ -75,4 +110,4 @@ function runMigrations() {
   }
 }
 
-module.exports = { initialize, getDb, getDbPath, close }
+module.exports = { initialize, getDb, getDbPath, setDbPath, getDefaultDbPath, readConfig, writeConfig, close }

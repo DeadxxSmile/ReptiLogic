@@ -1,6 +1,6 @@
 {
   "name": "reptilogic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop collection and breeding manager for reptile keepers",
   "main": "src/main/main.js",
   "scripts": {

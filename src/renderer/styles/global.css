@@ -12,8 +12,8 @@
 
   /* Legibility improvements — all text values brightened */
   --text-primary:   #f0f0f0;   /* was #e8e8e8 */
-  --text-secondary: #b8b8b8;   /* was #9a9a9a */
-  --text-muted:     #787878;   /* was #5a5a5a */
+  --text-secondary: #c8c8c8;   /* bumped for legibility */
+  --text-muted:     #909090;   /* bumped for legibility */
   --text-inverse:   #0f0f0f;
 
   --accent:        #4a7c59;
@@ -64,7 +64,7 @@ body {
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 15.5px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -73,7 +73,7 @@ body {
 h1 { font-size: 23px; font-weight: 600; letter-spacing: -0.3px; }
 h2 { font-size: 19px; font-weight: 600; }
 h3 { font-size: 16px; font-weight: 600; }
-h4 { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+h4 { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
 a { color: var(--accent-text); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -122,7 +122,7 @@ a:hover { text-decoration: underline; }
   gap: 4px;
   padding: 2px 8px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -183,14 +183,14 @@ a:hover { text-decoration: underline; }
 }
 .btn-danger:hover:not(:disabled) { background: var(--red); color: #fff; }
 
-.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-sm { padding: 4px 10px; font-size: 13px; }
 .btn-lg { padding: 10px 20px; font-size: 15px; }
 
 /* ── Form elements ────────────────────────────────────────── */
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 
 .form-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -226,9 +226,9 @@ a:hover { text-decoration: underline; }
 
 .form-textarea { resize: vertical; min-height: 80px; }
 
-.form-hint { font-size: 12px; color: var(--text-muted); }
+.form-hint { font-size: 13px; color: var(--text-muted); }
 
-.form-error { font-size: 12px; color: var(--red-text); }
+.form-error { font-size: 13px; color: var(--red-text); }
 
 /* ── Tables ───────────────────────────────────────────────── */
 .table-wrapper { overflow-x: auto; }
@@ -236,13 +236,13 @@ a:hover { text-decoration: underline; }
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 15.5px;
 }
 
 th {
   text-align: left;
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -274,7 +274,7 @@ tr:last-child td { border-bottom: none; }
 
 .empty-state-icon { font-size: 40px; opacity: 0.4; }
 .empty-state h3   { color: var(--text-secondary); font-size: 16px; }
-.empty-state p    { font-size: 13px; max-width: 300px; }
+.empty-state p    { font-size: 14px; max-width: 300px; }
 
 .spinner {
   width: 24px; height: 24px;
@@ -299,7 +299,7 @@ tr:last-child td { border-bottom: none; }
 
 .section { margin-bottom: 2rem; }
 .section-title {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -333,12 +333,63 @@ tr:last-child td { border-bottom: none; }
   flex-direction: column;
   gap: 4px;
 }
-.stat-tile-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.stat-tile-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
 .stat-tile-value { font-size: 24px; font-weight: 600; line-height: 1.2; }
-.stat-tile-sub   { font-size: 12px; color: var(--text-secondary); }
+.stat-tile-sub   { font-size: 13px; color: var(--text-secondary); }
 
 /* ── Dividers ─────────────────────────────────────────────── */
 .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
 /* ── Tag lists (morph tags) ───────────────────────────────── */
 .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── Light mode ───────────────────────────────────────────── */
+body.light-mode {
+  --bg-base:       #f0f0f0;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #e8e8e8;
+  --bg-hover:      #dcdcdc;
+  --bg-selected:   #c8ddd1;
+
+  --border:        #cccccc;
+  --border-subtle: #e0e0e0;
+  --border-focus:  #4a7c59;
+
+  --text-primary:   #141414;
+  --text-secondary: #444444;
+  --text-muted:     #888888;
+  --text-inverse:   #f0f0f0;
+
+  --accent:        #4a7c59;
+  --accent-bright: #3d6b4a;
+  --accent-dim:    #c8e6d0;
+  --accent-text:   #1e4d2e;
+
+  --amber:         #b87c00;
+  --amber-dim:     #fff3cc;
+  --amber-text:    #7a4e00;
+
+  --red:           #cc3333;
+  --red-dim:       #fde8e8;
+  --red-text:      #8b1a1a;
+
+  --blue:          #2266aa;
+  --blue-dim:      #ddeeff;
+  --blue-text:     #0d3d6e;
+
+  --purple:        #6644aa;
+  --purple-dim:    #ede8f8;
+  --purple-text:   #3d1f77;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.15);
+}
+
+/* Fix titlebar in light mode */
+body.light-mode .titlebar { background: #e0e0e0; border-bottom-color: #cccccc; }
+body.light-mode .titlebar-title { color: #444; }
+body.light-mode .titlebar-btn { color: #666; }
+body.light-mode .titlebar-btn:hover { background: rgba(0,0,0,0.08); color: #111; }
+body.light-mode .titlebar-btn--close:hover { background: #c42b1c; color: #fff; }
+

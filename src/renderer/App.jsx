@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import TitleBar from './components/TitleBar'
+import FirstRunModal from './components/FirstRunModal'
 import './styles/App.css'
 
 const NAV_ITEMS = [
@@ -16,14 +17,23 @@ const NAV_ITEMS = [
 export default function App() {
   const location = useLocation()
   const [navCollapsed, setNavCollapsed] = useState(false)
+  const [showFirstRun, setShowFirstRun] = useState(false)
+
+  useEffect(() => {
+    // Check if this is a first run (no animals in DB yet)
+    window.api.db.isFirstRun()
+      .then(isFirst => { if (isFirst) setShowFirstRun(true) })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="app-root">
-
-      {/* ── Custom title bar ──────────────────────────────────── */}
       <TitleBar />
 
-      {/* ── Body: sidebar + content ───────────────────────────── */}
+      {showFirstRun && (
+        <FirstRunModal onComplete={() => setShowFirstRun(false)} />
+      )}
+
       <div className={`app-shell ${navCollapsed ? 'nav-collapsed' : ''}`}>
         <aside className="sidebar">
           <div className="sidebar-logo">

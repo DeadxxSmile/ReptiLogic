@@ -29,7 +29,8 @@ contextBridge.exposeInMainWorld('api', {
     getAll:        ()          => ipcRenderer.invoke('morphs:getAll'),
     search:        (query)     => ipcRenderer.invoke('morphs:search', query),
     getCategories: (speciesId) => ipcRenderer.invoke('morphs:getCategories', speciesId),
-    create: (data) => ipcRenderer.invoke('morphs:create', data),
+    create:   (data) => ipcRenderer.invoke('morphs:create', data),
+    getCount: ()     => ipcRenderer.invoke('morphs:getCount'),
   },
 
   breeding: {
@@ -106,6 +107,14 @@ contextBridge.exposeInMainWorld('api', {
     morphsCsv: (filePath) => ipcRenderer.invoke('import:morphsCsv', filePath),
     restoreAny: (filePath) => ipcRenderer.invoke('import:restoreAny', filePath),
     fullBackup: (filePath) => ipcRenderer.invoke('import:fullBackup', filePath),
+  },
+
+  db: {
+    getPath:          ()          => ipcRenderer.invoke('db:getPath'),
+    chooseFolder:     ()          => ipcRenderer.invoke('db:chooseFolder'),
+    setPath:          (newFolder) => ipcRenderer.invoke('db:setPath', newFolder),
+    isFirstRun:       ()          => ipcRenderer.invoke('db:isFirstRun'),
+    markNotFirstRun:  ()          => ipcRenderer.invoke('db:markNotFirstRun'),
   },
 
   settings: {

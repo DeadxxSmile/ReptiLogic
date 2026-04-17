@@ -703,10 +703,103 @@ function registerSettingsHandlers(ipcMain) {
   })
 }
 
+
+// ── Database path handlers ────────────────────────────────────────────────────
+
+function registerDbPathHandlers(ipcMain, dialog) {
+  const dbModule = require('../database/db')
+
+  ipcMain.handle('db:getPath', () => {
+    return dbModule.getDbPath()
+  })
+
+  ipcMain.handle('db:isFirstRun', () => {
+    // Read the config sidecar — once the wizard is completed the flag is written
+    // there permanently, completely independent of animal count.
+    try {
+      const cfg = dbModule.readConfig()
+      return cfg.first_run_completed !== true
+    } catch (_) {
+      return true
+    }
+  })
+
+  ipcMain.handle('db:markNotFirstRun', () => {
+    // Use the shared writeConfig helper from db.js so the path is always correct
+    // regardless of whether the user has moved their database location.
+    try {
+      dbModule.writeConfig({ first_run_completed: true })
+    } catch (e) {
+      console.error('[FirstRun] Failed to write config:', e.message)
+    }
+    return { success: true }
+  })
+
+  ipcMain.handle('db:chooseFolder', async () => {
+    const result = await dialog.showOpenDialog({
+      title:      'Choose database storage folder',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('db:setPath', async (_, newFolder) => {
+    const pathLib = require('path')
+    const fs      = require('fs')
+
+    const currentPath = dbModule.getDbPath()
+
+    // Always place the DB inside a ReptiLogic subfolder
+    const reptiFolder = pathLib.join(newFolder, 'ReptiLogic')
+    const newPath     = pathLib.join(reptiFolder, 'reptilogic.db')
+
+    if (currentPath === newPath) {
+      return { success: true, path: newPath, unchanged: true }
+    }
+
+    // Create the ReptiLogic subfolder if it doesn't exist
+    try {
+      fs.mkdirSync(reptiFolder, { recursive: true })
+    } catch (e) {
+      return { success: false, error: 'Could not create folder: ' + e.message }
+    }
+
+    const existsAtDestination = fs.existsSync(newPath)
+
+    // Use SQLite backup API for a safe hot copy while DB is live
+    try {
+      await dbModule.getDb().backup(newPath)
+    } catch (e) {
+      return { success: false, error: 'Failed to copy database: ' + e.message }
+    }
+
+    // Persist new path in the JSON sidecar config (survives restarts)
+    try {
+      dbModule.setDbPath(newPath)
+    } catch (e) {
+      return { success: false, error: 'Failed to save path preference: ' + e.message }
+    }
+
+    return { success: true, path: newPath, existedAtDestination: existsAtDestination }
+  })
+}
+
+// ── Morph count ───────────────────────────────────────────────────────────────
+
+function registerMorphCountHandler(ipcMain) {
+  const dbModule = require('../database/db')
+
+  ipcMain.handle('morphs:getCount', () => {
+    return dbModule.getDb().prepare('SELECT COUNT(*) AS total FROM morphs').get()
+  })
+}
+
 function register(ipcMain, dialog) {
   registerExportHandlers(ipcMain, dialog)
   registerImportHandlers(ipcMain, dialog)
   registerSettingsHandlers(ipcMain)
+  registerDbPathHandlers(ipcMain, dialog)
+  registerMorphCountHandler(ipcMain)
 }
 
 module.exports = { register }

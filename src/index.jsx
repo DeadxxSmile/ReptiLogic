@@ -16,6 +16,14 @@ import HealthPage       from './renderer/pages/HealthPage'
 import './renderer/styles/global.css'
 import './renderer/styles/shared.css'
 
+// Apply saved light mode before first render to avoid flash
+;(async () => {
+  try {
+    const s = await window.api.settings.getAll()
+    if (s?.light_mode === '1') document.body.classList.add('light-mode')
+  } catch (_) {}
+})()
+
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
 root.render(
