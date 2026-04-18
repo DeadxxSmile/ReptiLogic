@@ -311,7 +311,7 @@ export default function SettingsPage() {
             <table className="about-table">
               <tbody>
                 <AboutRow label="App"               value="ReptiLogic" />
-                <AboutRow label="Version"           value="1.1.1" />
+                <AboutRow label="Version"           value="1.1.2" />
                 <AboutRow label="Author"            value="Deadx_xSmile" />
                 <AboutRow label="Source"            value={
                   <a href="https://github.com/DeadxxSmile/ReptiLogic" target="_blank" rel="noopener noreferrer"

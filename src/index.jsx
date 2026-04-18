@@ -14,6 +14,7 @@ import AddMorphPage       from './renderer/pages/AddMorphPage'
 import SettingsPage       from './renderer/pages/SettingsPage'
 import HealthPage         from './renderer/pages/HealthPage'
 import AnimalLibraryPage  from './renderer/pages/AnimalLibraryPage'
+import AddSpeciesPage     from './renderer/pages/AddSpeciesPage'
 import './renderer/styles/global.css'
 import './renderer/styles/shared.css'
 
@@ -44,6 +45,7 @@ appRoot.render(
           <Route path="morphs"              element={<MorphLibraryPage />} />
           <Route path="morphs/add"          element={<AddMorphPage />} />
           <Route path="library"             element={<AnimalLibraryPage />} />
+          <Route path="library/add"         element={<AddSpeciesPage />} />
           <Route path="health"              element={<HealthPage />} />
           <Route path="settings"            element={<SettingsPage />} />
         </Route>
