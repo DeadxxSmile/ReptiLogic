@@ -40,7 +40,7 @@ export default function GeneticsPage() {
       if (mode === 'from_collection' && maleId && femaleId) {
         res = await window.api.breeding.calculateOutcomes(maleId, femaleId)
       } else {
-        res = await window.api.genetics.calculate(maleGenes, femaleGenes)
+        res = await window.api.genetics.calculate(maleGenes, femaleGenes, speciesId)
       }
       setResult(res)
     } catch (e) {
@@ -177,18 +177,25 @@ function ParentGeneBuilder({ label, genes, morphList, onChange, color }) {
   const addGene = (morph) => {
     const defaultExpr = morph.inheritance_type === 'recessive' ? 'visual' : 'single'
     onChange(prev => [...prev, {
-      morphId:         morph.id,
-      morphName:       morph.name,
-      inheritanceType: morph.inheritance_type,
-      superFormName:   morph.super_form_name,
+      morphId:          morph.id,
+      morphName:        morph.name,
+      inheritanceType:  morph.inheritance_type,
+      superFormName:    morph.super_form_name,
       hasHealthConcern: morph.has_health_concern,
       healthConcernDesc: morph.health_concern_desc,
-      expression:      defaultExpr,
+      alleleGroupId:    morph.allele_group_id,
+      crossAlleleResult: morph.cross_allele_result,
+      isSexLinked:      morph.is_sex_linked === 1,
+      makerType:        null,  // set by user for males
+      expression:       defaultExpr,
     }])
     setSearch('')
   }
 
   const removeGene = (morphId) => onChange(prev => prev.filter(g => g.morphId !== morphId))
+
+  const updateMakerType = (morphId, makerType) =>
+    onChange(prev => prev.map(g => g.morphId === morphId ? { ...g, makerType } : g))
 
   const updateExpr = (morphId, expression) =>
     onChange(prev => prev.map(g => g.morphId === morphId ? { ...g, expression } : g))
@@ -201,8 +208,8 @@ function ParentGeneBuilder({ label, genes, morphList, onChange, color }) {
       {genes.length > 0 && (
         <div className="calc-gene-list">
           {genes.map(g => (
-            <div key={g.morphId} className="calc-gene-row">
-              <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{g.morphName}</span>
+            <div key={g.morphId} className="calc-gene-row" style={{ flexWrap: 'wrap' }}>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 500, minWidth: 100 }}>{g.morphName}</span>
               <select
                 className="form-select"
                 style={{ fontSize: 11, padding: '3px 6px', height: 'auto', width: 'auto' }}
@@ -218,15 +225,33 @@ function ParentGeneBuilder({ label, genes, morphList, onChange, color }) {
                   </>
                 ) : (
                   <>
-                    <option value="single">Single copy</option>
-                    <option value="super">{g.superFormName || 'Super'}</option>
-                    <option value="normal">Normal / non-visual</option>
+                    <option value="single">Single copy (visual)</option>
+                    <option value="super">Super / Homozygous{g.superFormName ? ` (${g.superFormName})` : ''}</option>
+                    <option value="normal">Non-visual (carries gene)</option>
                   </>
                 )}
               </select>
+              {g.isSexLinked && color === 'var(--blue-text)' && (g.expression === 'single' || g.expression === 'super') && (
+                <select
+                  className="form-select"
+                  style={{ fontSize: 11, padding: '3px 6px', height: 'auto', width: 'auto' }}
+                  value={g.makerType || ''}
+                  onChange={e => updateMakerType(g.morphId, e.target.value || null)}
+                  title="Maker type affects sex ratios of offspring"
+                >
+                  <option value="">Maker type unknown</option>
+                  <option value="male_maker">Male Maker (~93% ♂ Banana offspring)</option>
+                  <option value="female_maker">Female Maker (~93% ♀ Banana offspring)</option>
+                </select>
+              )}
               <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', color: 'var(--text-muted)' }} onClick={() => removeGene(g.morphId)}>×</button>
             </div>
           ))}
+          {genes.some(g => g.alleleGroupId) && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '6px 4px 2px', borderTop: '1px solid var(--border)', marginTop: 4, lineHeight: 1.5 }}>
+              💡 BEL complex genes: to produce a BEL, add a <em>different</em> allele (e.g. Mojave, Butter) to the other parent as a separate gene entry.
+            </div>
+          )}
         </div>
       )}
 
@@ -261,54 +286,100 @@ function ParentGeneBuilder({ label, genes, morphList, onChange, color }) {
 
 // ── Calculator results ────────────────────────────────────────────────────────
 function CalcResults({ result }) {
-  const { outcomes = [], healthWarnings = [], summary = {} } = result
+  const { outcomes = [], healthWarnings = [], summary = {}, clutchProjection } = result
   const [showAll, setShowAll] = useState(false)
-  const visible = showAll ? outcomes : outcomes.slice(0, 12)
+  const visible = showAll ? outcomes : outcomes.slice(0, 16)
+
+  // Build clutch lookup by label for inline display
+  const clutchByLabel = {}
+  if (clutchProjection) {
+    for (const p of clutchProjection.projections) {
+      clutchByLabel[p.label] = p
+    }
+  }
 
   return (
     <div className="calc-results">
-      <h3 style={{ marginBottom: 12 }}>Possible offspring</h3>
 
+      {/* ── Health warnings ─────────────────────────────── */}
       {healthWarnings?.length > 0 && (
-        <div style={{ background: 'var(--amber-dim)', color: 'var(--amber-text)', padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: 13, marginBottom: 14, border: '1px solid rgba(230,168,23,0.3)' }}>
-          ⚠ <strong>Health concern:</strong> {healthWarnings.map(w => `${w.morphName} — ${w.description}`).join(' · ')}
+        <div style={{ background: 'var(--amber-dim)', color: 'var(--amber-text)', padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: 13, marginBottom: 16, border: '1px solid rgba(230,168,23,0.3)' }}>
+          ⚠ <strong>Health concern in parents:</strong>
+          <ul style={{ margin: '6px 0 0 16px', padding: 0 }}>
+            {healthWarnings.map((w,i) => <li key={i}>{w.morphName} — {w.description}</li>)}
+          </ul>
         </div>
       )}
 
-      <div className="grid-4" style={{ marginBottom: 16 }}>
-        <StatTile label="Unique outcomes" value={summary.totalOutcomes || 0} />
-        <StatTile label="With morph"      value={`${summary.morphPercent?.toFixed(0) || 0}%`} color="var(--accent-text)" />
-        <StatTile label="Normal"          value={`${summary.normalPercent?.toFixed(0) || 0}%`} />
-        <StatTile label="Visual combos"   value={summary.uniqueVisuals || 0} color="var(--blue-text)" />
-      </div>
+      {/* ── Outcome cards ────────────────────────────────── */}
+      {clutchProjection && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
+          Clutch estimate based on typical <strong style={{ color: 'var(--text-primary)' }}>{clutchProjection.min}–{clutchProjection.max} eggs</strong> (avg {clutchProjection.avg}) — expected count shown per outcome below
+        </div>
+      )}
 
       <div className="calc-result-grid">
         {visible.map((o, i) => (
-          <OutcomeCard key={i} outcome={o} />
+          <OutcomeCard key={i} outcome={o} clutch={clutchByLabel[o.label]} />
         ))}
       </div>
 
-      {outcomes.length > 12 && (
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
+      {outcomes.length > 16 && (
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
           <button className="btn btn-ghost" onClick={() => setShowAll(v => !v)}>
             {showAll ? 'Show fewer' : `Show all ${outcomes.length} outcomes`}
           </button>
         </div>
       )}
+
+      {/* ── Stats box ────────────────────────────────────── */}
+      <div style={{
+        marginTop: 20, padding: '14px 18px',
+        background: 'var(--surface-2)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-md)',
+      }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>
+          Breakdown
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {[
+            { label: 'Possible outcomes', value: summary.totalOutcomes || 0 },
+            { label: 'Chance of morph', value: `${summary.morphPercent?.toFixed(0) ?? 0}%`, accent: true },
+            { label: 'Chance of normal', value: `${summary.normalPercent?.toFixed(0) ?? 0}%` },
+            { label: 'Visual combos', value: summary.uniqueVisuals || 0 },
+          ].map(s => (
+            <div key={s.label} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: s.accent ? 'var(--accent-text)' : 'var(--text-primary)' }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
-function OutcomeCard({ outcome: o }) {
+function OutcomeCard({ outcome: o, clutch }) {
   const pctVal = (o.probability * 100)
-  const pctStr = pctVal < 0.1 ? '<0.1%' : pctVal === Math.round(pctVal) ? `${pctVal}%` : `${pctVal.toFixed(1)}%`
+  const pctStr = pctVal < 0.1 ? '<0.1%' : pctVal % 1 === 0 ? `${pctVal}%` : `${pctVal.toFixed(1)}%`
 
   return (
-    <div className={`outcome-card ${o.hasHealthConcern ? 'outcome-card-health' : ''}`}>
+    <div className={`outcome-card ${o.isComplex ? 'outcome-card-complex' : ''} ${o.hasHealthConcern ? 'outcome-card-health' : ''} ${o.isNormal ? 'outcome-card-normal' : ''}`}>
       <div className="outcome-card-pct">{pctStr}</div>
       <div className="outcome-card-label">{o.label}</div>
-      {o.hasHealthConcern && (
-        <div className="outcome-card-warning">⚠ Health concern</div>
+      {o.isComplex && <div className="outcome-card-badge">✨ Combo</div>}
+      {o.isSuperForm && !o.isComplex && <div className="outcome-card-badge">⬆ Super</div>}
+      {o.sexNote && (
+        <div style={{ fontSize: 11, color: 'var(--blue-text)', marginTop: 3, fontWeight: 500 }}>
+          ⚥ {o.sexNote}
+        </div>
+      )}
+      {o.hasHealthConcern && <div className="outcome-card-warning">⚠ Health concern</div>}
+      {clutch && (
+        <div className="outcome-card-clutch">
+          ~{clutch.expectedAvg} <span>per clutch</span>
+          <span className="outcome-card-clutch-range">({clutch.expectedMin}–{clutch.expectedMax})</span>
+        </div>
       )}
     </div>
   )

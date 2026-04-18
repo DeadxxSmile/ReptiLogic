@@ -26,6 +26,8 @@ export default function AddMorphPage() {
     category: 'Recessive',
     inheritance_type: 'recessive',
     super_form_name: '',
+    allele_group_id: '',
+    cross_allele_result: '',
     has_health_concern: false,
     health_concern_desc: '',
     description: '',
@@ -151,6 +153,20 @@ export default function AddMorphPage() {
                 <textarea className="form-textarea" rows="4" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the morph, project notes, lineage, etc." />
               </div>
 
+              {/* ── Allele group (complex) ─────────────────────── */}
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="form-label">Allele group / complex</label>
+                <span className="form-hint" style={{ display: 'block', marginBottom: 6 }}>
+                  If this morph shares a chromosomal locus with other morphs (like the BEL complex), enter the group ID here (e.g. <code>bp_bel_complex</code>). Leave blank if independent.
+                </span>
+                <div className="grid-2" style={{ gap: 12 }}>
+                  <input className="form-input" value={form.allele_group_id} onChange={e => set('allele_group_id', e.target.value)}
+                    placeholder="e.g. bp_bel_complex" style={{ fontFamily: 'var(--font-mono)' }} />
+                  <input className="form-input" value={form.cross_allele_result} onChange={e => set('cross_allele_result', e.target.value)}
+                    placeholder="Result when paired with another group member (e.g. Blue Eyed Leucistic)" />
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Health concern</label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)' }}>
@@ -177,7 +193,7 @@ export default function AddMorphPage() {
               {form.is_combo && (
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="form-label">Combo components</label>
-                  <input className="form-input" value={form.combo_components} onChange={e => set('combo_components', e.target.value)} placeholder='Optional notes or JSON component list, e.g. ["pastel","mojave"]' />
+                  <input className="form-input" value={form.combo_components} onChange={e => set('combo_components', e.target.value)} placeholder='e.g. Pastel + Spider' />
                 </div>
               )}
             </div>

@@ -123,3 +123,104 @@
   font-size: 13px;
   border-collapse: collapse;
 }
+
+/* ── Data management row ──────────────────────────────────── */
+.data-mgmt-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.data-mgmt-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.1s, background 0.15s;
+  min-height: 120px;
+}
+
+.data-mgmt-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.data-mgmt-card--accent {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.data-mgmt-card--accent:hover {
+  background: var(--accent-dim);
+  filter: brightness(1.08);
+}
+
+.data-mgmt-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.data-mgmt-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.data-mgmt-card--accent .data-mgmt-title {
+  color: var(--accent-text);
+}
+
+.data-mgmt-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── About panel ──────────────────────────────────────────── */
+.about-panel {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  justify-content: center;
+  max-width: 760px;
+}
+
+.about-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.about-logo-large {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+}
+
+.about-info-card {
+  flex: 1;
+  padding: 24px 28px;
+}
+
+.about-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.about-table td {
+  padding: 7px 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
+}
+
+.about-table tr:last-child td {
+  border-bottom: none;
+}

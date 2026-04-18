@@ -32,6 +32,20 @@ export default function BreedingPage() {
     })
   }, [records, search, statusFilter])
 
+  // gives_live_birth is joined directly on each record from the DB
+  const hasLiveBirth = useMemo(() => {
+    if (!filtered) return false
+    return filtered.some(r => r.gives_live_birth)
+  }, [filtered])
+
+  // Return context-aware label for a status value
+  const statusLabel = (s) => {
+    if (s === 'all')     return 'All'
+    if (s === 'laid')    return hasLiveBirth ? 'Laid / Born' : 'Laid'
+    if (s === 'hatched') return hasLiveBirth ? 'Hatched / Born' : 'Hatched'
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+
   const stats = useMemo(() => {
     if (!records) return {}
     const active  = records.filter(r => r.status === 'active').length
@@ -61,8 +75,8 @@ export default function BreedingPage() {
         <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
           <StatTile label="Active pairings"  value={stats.active}  color="var(--blue-text)" />
           <StatTile label="Gravid females"   value={stats.gravid}  color="var(--purple-text)" />
-          <StatTile label="Total eggs"       value={stats.eggs} />
-          <StatTile label="Hatched"          value={stats.hatched} color="var(--accent-text)" />
+          <StatTile label={hasLiveBirth ? 'Total eggs / young' : 'Total eggs'} value={stats.eggs} />
+          <StatTile label={hasLiveBirth ? 'Hatched / Born'     : 'Hatched'}    value={stats.hatched} color="var(--accent-text)" />
         </div>
       )}
 
@@ -83,7 +97,7 @@ export default function BreedingPage() {
         <div className="filter-group">
           {statusOptions.map(s => (
             <button key={s} className={`filter-btn ${statusFilter === s ? 'active' : ''}`} onClick={() => setStatusFilter(s)}>
-              {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+              {statusLabel(s)}
             </button>
           ))}
         </div>

@@ -238,7 +238,9 @@ function registerPairingEventHandlers(ipcMain) {
 function registerOffspringHandlers(ipcMain) {
   ipcMain.handle('offspring:getByClutch', (_, clutchId) => {
     return getDb().prepare(`
-      SELECT o.*, a.name AS animal_name
+      SELECT o.*,
+        a.name AS animal_name, a.animal_id AS linked_animal_id,
+        a.status AS animal_status
       FROM offspring o
       LEFT JOIN animals a ON a.id = o.animal_id
       WHERE o.clutch_id = ?
@@ -249,29 +251,36 @@ function registerOffspringHandlers(ipcMain) {
   ipcMain.handle('offspring:add', (_, clutchId, data) => {
     const db     = getDb()
     const id     = uuidv4()
+    const now    = new Date().toISOString()
     const clutch = db.prepare('SELECT * FROM clutches WHERE id = ?').get(clutchId)
     if (!clutch) throw new Error('Clutch not found')
 
     db.prepare(`
-      INSERT INTO offspring (id, clutch_id, breeding_record_id, sex, hatch_date,
-        hatch_weight_grams, disposition, sale_price, buyer_name, sale_date, notes)
-      VALUES (@id, @clutch_id, @breeding_record_id, @sex, @hatch_date,
-        @hatch_weight_grams, @disposition, @sale_price, @buyer_name, @sale_date, @notes)
+      INSERT INTO offspring (id, clutch_id, breeding_record_id, animal_id, sex, hatch_date,
+        hatch_weight_grams, disposition, sale_price, buyer_name, sale_date, notes, created_at)
+      VALUES (@id, @clutch_id, @breeding_record_id, @animal_id, @sex, @hatch_date,
+        @hatch_weight_grams, @disposition, @sale_price, @buyer_name, @sale_date, @notes, @created_at)
     `).run({
       id,
       clutch_id:          clutchId,
       breeding_record_id: clutch.breeding_record_id,
-      sex:                data.sex          || 'unknown',
-      hatch_date:         data.hatch_date   || clutch.hatch_date || null,
+      animal_id:          data.animal_id         || null,
+      sex:                data.sex               || 'unknown',
+      hatch_date:         data.hatch_date        || clutch.hatch_date || null,
       hatch_weight_grams: data.hatch_weight_grams ? Number(data.hatch_weight_grams) : null,
-      disposition:        data.disposition  || 'unknown',
-      sale_price:         data.sale_price   ? Number(data.sale_price) : null,
-      buyer_name:         data.buyer_name   || null,
-      sale_date:          data.sale_date    || null,
-      notes:              data.notes        || null,
+      disposition:        data.disposition       || 'unknown',
+      sale_price:         data.sale_price        ? Number(data.sale_price) : null,
+      buyer_name:         data.buyer_name        || null,
+      sale_date:          data.sale_date         || null,
+      notes:              data.notes             || null,
+      created_at:         now,
     })
 
-    return getDb().prepare('SELECT * FROM offspring WHERE clutch_id = ?').all(clutchId)
+    return getDb().prepare(`
+      SELECT o.*, a.name AS animal_name, a.animal_id AS linked_animal_id
+      FROM offspring o LEFT JOIN animals a ON a.id = o.animal_id
+      WHERE o.clutch_id = ? ORDER BY o.created_at
+    `).all(clutchId)
   })
 
   ipcMain.handle('offspring:update', (_, id, data) => {

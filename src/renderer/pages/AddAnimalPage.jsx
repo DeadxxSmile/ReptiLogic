@@ -1,31 +1,42 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAnimal, useSpecies, useMorphs } from '../hooks/useData'
+import { useAnimal, useSpecies, useMorphs, useAnimals } from '../hooks/useData'
 import { MorphTag, LoadingSpinner, PageError } from '../components/shared'
 import { inheritanceLabel, expressionLabel } from '../utils/format'
 import './AddAnimalPage.css'
 
 export default function AddAnimalPage() {
-  const { id }     = useParams()
-  const navigate   = useNavigate()
-  const isEdit     = Boolean(id)
+  const { id }   = useParams()
+  const navigate = useNavigate()
+  const isEdit   = Boolean(id)
 
   const { data: existingAnimal, loading: animalLoading } = useAnimal(id)
   const { data: speciesList,    loading: speciesLoading } = useSpecies()
+  const { data: allAnimals }                              = useAnimals()
 
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState(null)
   const [photos,  setPhotos]  = useState([])
 
-  // ── Health intake state ──────────────────────────────────────────────────────
-  const [healthIssues,  setHealthIssues]  = useState([])
-  // [{ title, category, severity, onset_date, description, treatment }]
-  const [initialMeds,   setInitialMeds]   = useState([])
-  // [{ name, dosage, frequency, route, start_date, prescribed_by, reason }]
-  const [initialWeight, setInitialWeight] = useState('')
-  const [showHealthSection, setShowHealthSection] = useState(false)
+  // ── Animal ID ────────────────────────────────────────────────────────────────
+  const [idMode,    setIdMode]    = useState('auto')
+  const [previewId, setPreviewId] = useState('')
+  const [manualId,  setManualId]  = useState('')
 
-  // ── Form state ──────────────────────────────────────────────────────────────
+  // ── Parents (lineage) ────────────────────────────────────────────────────────
+  const [fatherId, setFatherId] = useState('')
+  const [motherId, setMotherId] = useState('')
+
+  // ── Sex-linked maker type (Banana/Coral Glow males) ──────────────────────────
+  const [makerType, setMakerType] = useState('')
+
+  // ── Health at intake ─────────────────────────────────────────────────────────
+  const [healthIssues,      setHealthIssues]      = useState([])
+  const [initialMeds,       setInitialMeds]        = useState([])
+  const [initialWeight,     setInitialWeight]      = useState('')
+  const [showHealthSection, setShowHealthSection]  = useState(false)
+
+  // ── Form state ───────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     name:              '',
     species_id:        'ball_python',
@@ -40,10 +51,26 @@ export default function AddAnimalPage() {
     notes:             '',
   })
 
-  const [selectedMorphs, setSelectedMorphs] = useState([])
-  // [{ morph_id, morph_name, inheritance_type, expression, het_percent, has_health_concern, super_form_name }]
+  const [selectedMorphs,  setSelectedMorphs]  = useState([])
+  const [morphSearch,     setMorphSearch]     = useState('')
+  const [morphCategory,   setMorphCategory]   = useState('all')
 
   const { data: morphList } = useMorphs(form.species_id)
+
+  // ── Load settings for ID mode default ───────────────────────────────────────
+  useEffect(() => {
+    window.api.settings.getAll().then(s => {
+      if (s?.animal_id_mode === 'manual') setIdMode('manual')
+    }).catch(() => {})
+  }, [])
+
+  // ── Preview auto-ID whenever key fields change ───────────────────────────────
+  useEffect(() => {
+    if (isEdit || idMode !== 'auto') return
+    window.api.animals.previewId(form.species_id, form.sex, selectedMorphs)
+      .then(setPreviewId)
+      .catch(() => {})
+  }, [form.species_id, form.sex, selectedMorphs, idMode, isEdit])
 
   // ── Populate for edit ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -61,15 +88,19 @@ export default function AddAnimalPage() {
       status:            existingAnimal.status || 'active',
       notes:             existingAnimal.notes || '',
     })
-
+    setManualId(existingAnimal.animal_id || '')
+    setIdMode(existingAnimal.animal_id ? 'manual' : 'auto')
+    setFatherId(existingAnimal.father_id || '')
+    setMotherId(existingAnimal.mother_id || '')
+    setMakerType(existingAnimal.sex_linked_maker || '')
     setSelectedMorphs((existingAnimal.morphs || []).map(m => ({
-      morph_id:         m.morph_id,
-      morph_name:       m.morph_name,
-      inheritance_type: m.inheritance_type,
-      super_form_name:  m.super_form_name,
+      morph_id:           m.morph_id,
+      morph_name:         m.morph_name,
+      inheritance_type:   m.inheritance_type,
+      super_form_name:    m.super_form_name,
       has_health_concern: m.has_health_concern,
-      expression:       m.expression,
-      het_percent:      m.het_percent,
+      expression:         m.expression,
+      het_percent:        m.het_percent,
     })))
   }, [existingAnimal, isEdit])
 
@@ -82,49 +113,37 @@ export default function AddAnimalPage() {
   }
 
   // ── Morph management ─────────────────────────────────────────────────────────
-  const [morphSearch, setMorphSearch]     = useState('')
-  const [morphCategory, setMorphCategory] = useState('all')
-
   const filteredMorphList = (morphList || []).filter(m => {
     const inSearch = !morphSearch ||
       m.name.toLowerCase().includes(morphSearch.toLowerCase()) ||
       m.gene_symbol?.toLowerCase().includes(morphSearch.toLowerCase())
-    const inCat = morphCategory === 'all' || m.category === morphCategory
-    const notSelected = !selectedMorphs.find(s => s.morph_id === m.id)
-    return inSearch && inCat && notSelected
+    const inCat    = morphCategory === 'all' || m.category === morphCategory
+    const notSel   = !selectedMorphs.find(s => s.morph_id === m.id)
+    return inSearch && inCat && notSel
   })
-
   const morphCategories = ['all', ...new Set((morphList || []).map(m => m.category).filter(Boolean))]
 
   const addMorph = (morph) => {
-    const defaultExpression = morph.inheritance_type === 'recessive' ? 'visual' : 'visual'
     setSelectedMorphs(prev => [...prev, {
       morph_id:           morph.id,
       morph_name:         morph.name,
       inheritance_type:   morph.inheritance_type,
       super_form_name:    morph.super_form_name,
       has_health_concern: morph.has_health_concern,
-      expression:         defaultExpression,
+      expression:         'visual',
       het_percent:        null,
     }])
     setMorphSearch('')
   }
+  const removeMorph = (morphId) => setSelectedMorphs(prev => prev.filter(m => m.morph_id !== morphId))
+  const updateMorphExpression = (morphId, expression) =>
+    setSelectedMorphs(prev => prev.map(m => m.morph_id === morphId ? { ...m, expression } : m))
+  const updateMorphHetPct = (morphId, pct) =>
+    setSelectedMorphs(prev => prev.map(m => m.morph_id === morphId ? { ...m, het_percent: pct } : m))
 
-  const removeMorph = (morphId) => {
-    setSelectedMorphs(prev => prev.filter(m => m.morph_id !== morphId))
-  }
-
-  const updateMorphExpression = (morphId, expression) => {
-    setSelectedMorphs(prev => prev.map(m =>
-      m.morph_id === morphId ? { ...m, expression } : m
-    ))
-  }
-
-  const updateMorphHetPct = (morphId, pct) => {
-    setSelectedMorphs(prev => prev.map(m =>
-      m.morph_id === morphId ? { ...m, het_percent: pct } : m
-    ))
-  }
+  // ── Parent picker helpers ─────────────────────────────────────────────────────
+  const maleOptions   = (allAnimals || []).filter(a => a.sex === 'male'   && a.species_id === form.species_id && a.id !== id)
+  const femaleOptions = (allAnimals || []).filter(a => a.sex === 'female' && a.species_id === form.species_id && a.id !== id)
 
   // ── Save ─────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -132,17 +151,22 @@ export default function AddAnimalPage() {
 
     setSaving(true)
     setError(null)
-
     try {
+      const finalAnimalId = idMode === 'manual' ? (manualId.trim() || null) : null  // null = auto-generate in backend
+
       const payload = {
         ...form,
+        animal_id:         finalAnimalId,
         weight_grams:      form.weight_grams      ? Number(form.weight_grams)      : null,
         acquisition_price: form.acquisition_price ? Number(form.acquisition_price) : null,
         dob:               form.dob || null,
         acquired_date:     form.acquired_date || null,
+        father_id:         fatherId || null,
+        mother_id:         motherId || null,
+        sex_linked_maker:  makerType || null,
         morphs: selectedMorphs.map(m => ({
-          morph_id:   m.morph_id,
-          expression: m.expression,
+          morph_id:    m.morph_id,
+          expression:  m.expression,
           het_percent: m.het_percent,
         })),
       }
@@ -154,12 +178,10 @@ export default function AddAnimalPage() {
         animal = await window.api.animals.create(payload)
       }
 
-      // Save any newly chosen photos
       if (photos.filter(p => p.isNew).length > 0) {
         await window.api.photos.save(animal.id, photos.filter(p => p.isNew))
       }
 
-      // Save initial weight measurement
       if (initialWeight && !isEdit) {
         await window.api.measurements.add(animal.id, {
           weight_grams: Number(initialWeight),
@@ -168,18 +190,11 @@ export default function AddAnimalPage() {
         })
       }
 
-      // Save intake health issues
       for (const issue of healthIssues) {
-        if (issue.title?.trim()) {
-          await window.api.health.addIssue(animal.id, issue)
-        }
+        if (issue.title?.trim()) await window.api.health.addIssue(animal.id, issue)
       }
-
-      // Save intake medications
       for (const med of initialMeds) {
-        if (med.name?.trim()) {
-          await window.api.health.addMedication(animal.id, { ...med, active: 1 })
-        }
+        if (med.name?.trim()) await window.api.health.addMedication(animal.id, { ...med, active: 1 })
       }
 
       navigate(`/collection/${animal.id}`)
@@ -200,9 +215,7 @@ export default function AddAnimalPage() {
           <h1>{isEdit ? `Edit ${existingAnimal?.name || 'Animal'}` : 'Add Animal'}</h1>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary" onClick={() => navigate(-1)} disabled={saving}>
-            Cancel
-          </button>
+          <button className="btn btn-secondary" onClick={() => navigate(-1)} disabled={saving}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Animal'}
           </button>
@@ -217,16 +230,17 @@ export default function AddAnimalPage() {
 
       <div className="add-animal-layout">
 
-        {/* ── Left column: basic info ─────────────────────── */}
+        {/* ── Left column ─────────────────────────────────── */}
         <div className="add-animal-main">
 
+          {/* Basic info */}
           <div className="card section">
             <h3 style={{ marginBottom: 16 }}>Basic information</h3>
             <div className="grid-2" style={{ gap: 14 }}>
 
               <div className="form-group">
                 <label className="form-label">Name *</label>
-                <input className="form-input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Sable, Ghost, #24-01" />
+                <input className="form-input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Sable, Ghost, Princess" />
               </div>
 
               <div className="form-group">
@@ -296,16 +310,97 @@ export default function AddAnimalPage() {
             </div>
           </div>
 
-          {/* ── Photo upload ──────────────────────────────── */}
+          {/* ── Animal ID ──────────────────────────────────── */}
+          <div className="card section">
+            <h3 style={{ marginBottom: 4 }}>Animal ID *</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+              A unique identifier for tracking. Auto-generate uses species, sex, count, and morphs.
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              {['auto', 'manual'].map(m => (
+                <label key={m} className={`radio-btn ${idMode === m ? 'selected' : ''}`} style={{ flex: 1, justifyContent: 'center' }}>
+                  <input type="radio" name="idMode" value={m} checked={idMode === m} onChange={() => setIdMode(m)} />
+                  {m === 'auto' ? '⚡ Auto-generate' : '✏️ Manual'}
+                </label>
+              ))}
+            </div>
+            {idMode === 'auto' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="form-input" style={{ flex: 1, background: 'var(--surface-2)', color: 'var(--accent-text)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
+                  {previewId || '—'}
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>preview</span>
+              </div>
+            ) : (
+              <input
+                className="form-input"
+                value={manualId}
+                onChange={e => setManualId(e.target.value)}
+                placeholder="Enter your ID (e.g. BP-2024-001, SBL-F-07)"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              />
+            )}
+          </div>
+
+          {/* ── Lineage / Parents ─────────────────────────── */}
+          <div className="card section">
+            <h3 style={{ marginBottom: 4 }}>Lineage</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+              Link this animal's parents for full lineage tracking. Used in husbandry reports.
+            </p>
+            <div className="grid-2" style={{ gap: 14 }}>
+              <div className="form-group">
+                <label className="form-label">♂ Sire (Father)</label>
+                <select className="form-select" value={fatherId} onChange={e => setFatherId(e.target.value)}>
+                  <option value="">— Unknown / Not in collection —</option>
+                  {maleOptions.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}{a.animal_id ? ` (${a.animal_id})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">♀ Dam (Mother)</label>
+                <select className="form-select" value={motherId} onChange={e => setMotherId(e.target.value)}>
+                  <option value="">— Unknown / Not in collection —</option>
+                  {femaleOptions.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}{a.animal_id ? ` (${a.animal_id})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Maker type — only shown for males carrying Banana / Coral Glow */}
+            {form.sex === 'male' && selectedMorphs.some(m =>
+              m.morph_id === 'bp_banana' || m.morph_id === 'bp_coral_glow' ||
+              m.morph_name?.toLowerCase().includes('banana') ||
+              m.morph_name?.toLowerCase().includes('coral glow')
+            ) && (
+              <div className="form-group" style={{ marginTop: 14, padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                <label className="form-label">🍌 Banana / Coral Glow maker type</label>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
+                  Male Banana/Coral Glow snakes are either <strong>Male Makers</strong> (their Banana parent was male — ~93% of their Banana offspring will be male)
+                  or <strong>Female Makers</strong> (their Banana parent was female — ~93% of Banana offspring will be female).
+                  This is critical for planning pairings and predicting sex ratios.
+                </p>
+                <select className="form-select" style={{ maxWidth: 340 }} value={makerType} onChange={e => setMakerType(e.target.value)}>
+                  <option value="">Unknown / not recorded</option>
+                  <option value="male_maker">Male Maker (~93% male Banana offspring)</option>
+                  <option value="female_maker">Female Maker (~93% female Banana offspring)</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* ── Photos ────────────────────────────────────── */}
           <div className="card section">
             <h3 style={{ marginBottom: 12 }}>Photos</h3>
             <div className="photo-grid">
               {photos.map((p, i) => (
-                <PhotoPreviewThumb
-                  key={i}
-                  photo={p}
-                  onRemove={() => setPhotos(ps => ps.filter((_, j) => j !== i))}
-                />
+                <PhotoPreviewThumb key={i} photo={p} onRemove={() => setPhotos(ps => ps.filter((_, j) => j !== i))} />
               ))}
               <button className="photo-add-btn" onClick={handlePhotos}>
                 <span>+</span>
@@ -314,7 +409,7 @@ export default function AddAnimalPage() {
             </div>
           </div>
 
-          {/* ── Health at intake ───────────────────────────── */}
+          {/* ── Health at intake ──────────────────────────── */}
           <div className="card section">
             <div
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -322,26 +417,19 @@ export default function AddAnimalPage() {
             >
               <div>
                 <h3>Health at intake</h3>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
-                  Optional — log known conditions, medications, and initial weight
-                </p>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>Optional — log known conditions, medications, and initial weight</p>
               </div>
-              <span style={{ color: 'var(--text-muted)', fontSize: 18, userSelect: 'none' }}>
-                {showHealthSection ? '▾' : '▸'}
-              </span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 18, userSelect: 'none' }}>{showHealthSection ? '▾' : '▸'}</span>
             </div>
 
             {showHealthSection && (
               <div style={{ marginTop: 16 }}>
-                {/* Initial weight */}
                 <div className="form-group" style={{ maxWidth: 200, marginBottom: 20 }}>
                   <label className="form-label">Initial weight (grams)</label>
-                  <input type="number" className="form-input" value={initialWeight}
-                    onChange={e => setInitialWeight(e.target.value)} placeholder="e.g. 65" min="0" />
+                  <input type="number" className="form-input" value={initialWeight} onChange={e => setInitialWeight(e.target.value)} placeholder="e.g. 65" min="0" />
                   <span className="form-hint">Saved as a measurement entry on creation</span>
                 </div>
 
-                {/* Health issues */}
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                     <label className="form-label" style={{ marginBottom: 0 }}>Known health issues</label>
@@ -350,7 +438,7 @@ export default function AddAnimalPage() {
                     }>+ Add issue</button>
                   </div>
                   {healthIssues.length === 0
-                    ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No issues — click "Add issue" if this animal has known conditions.</p>
+                    ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No issues recorded.</p>
                     : healthIssues.map((issue, i) => (
                         <IntakeIssueRow key={i} issue={issue}
                           onChange={u => setHealthIssues(prev => prev.map((h, j) => j === i ? u : h))}
@@ -360,7 +448,6 @@ export default function AddAnimalPage() {
                   }
                 </div>
 
-                {/* Medications */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                     <label className="form-label" style={{ marginBottom: 0 }}>Current medications</label>
@@ -369,7 +456,7 @@ export default function AddAnimalPage() {
                     }>+ Add medication</button>
                   </div>
                   {initialMeds.length === 0
-                    ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No medications — click "Add medication" if this animal is currently on treatment.</p>
+                    ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No medications recorded.</p>
                     : initialMeds.map((med, i) => (
                         <IntakeMedRow key={i} med={med}
                           onChange={u => setInitialMeds(prev => prev.map((m, j) => j === i ? u : m))}
@@ -391,13 +478,11 @@ export default function AddAnimalPage() {
               Add all genes this animal carries — visuals, hets, and possible hets.
             </p>
 
-            {/* Selected morphs */}
             {selectedMorphs.length > 0 && (
               <div className="selected-morphs">
                 {selectedMorphs.map(m => (
                   <SelectedMorphRow
-                    key={m.morph_id}
-                    morph={m}
+                    key={m.morph_id} morph={m}
                     onRemove={() => removeMorph(m.morph_id)}
                     onExpressionChange={(e) => updateMorphExpression(m.morph_id, e)}
                     onHetPctChange={(p) => updateMorphHetPct(m.morph_id, p)}
@@ -406,50 +491,29 @@ export default function AddAnimalPage() {
               </div>
             )}
 
-            {/* Morph picker */}
             <div className="morph-picker">
-              <input
-                className="form-input"
-                placeholder="Search morphs…"
-                value={morphSearch}
-                onChange={e => setMorphSearch(e.target.value)}
-                style={{ marginBottom: 8 }}
-              />
-
+              <input className="form-input" placeholder="Search morphs…" value={morphSearch}
+                onChange={e => setMorphSearch(e.target.value)} style={{ marginBottom: 8 }} />
               <div className="morph-category-tabs">
                 {morphCategories.map(cat => (
-                  <button
-                    key={cat}
-                    className={`filter-btn ${morphCategory === cat ? 'active' : ''}`}
-                    onClick={() => setMorphCategory(cat)}
-                    style={{ fontSize: 11 }}
-                  >
+                  <button key={cat} className={`filter-btn ${morphCategory === cat ? 'active' : ''}`}
+                    onClick={() => setMorphCategory(cat)} style={{ fontSize: 11 }}>
                     {cat === 'all' ? 'All' : cat}
                   </button>
                 ))}
               </div>
-
               <div className="morph-list">
                 {filteredMorphList.slice(0, 50).map(morph => (
-                  <button
-                    key={morph.id}
-                    className="morph-list-item"
-                    onClick={() => addMorph(morph)}
-                    title={morph.description}
-                  >
+                  <button key={morph.id} className="morph-list-item" onClick={() => addMorph(morph)} title={morph.description}>
                     <span className="morph-list-name">{morph.name}</span>
                     <span className={`badge badge-${morph.inheritance_type}`} style={{ fontSize: 10 }}>
                       {inheritanceLabel(morph.inheritance_type)}
                     </span>
-                    {morph.has_health_concern === 1 && (
-                      <span style={{ color: 'var(--amber-text)', fontSize: 11 }}>⚠</span>
-                    )}
+                    {morph.has_health_concern === 1 && <span style={{ color: 'var(--amber-text)', fontSize: 11 }}>⚠</span>}
                   </button>
                 ))}
                 {filteredMorphList.length === 0 && (
-                  <div style={{ padding: '12px 0', color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>
-                    No morphs found
-                  </div>
+                  <div style={{ padding: '12px 0', color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>No morphs found</div>
                 )}
               </div>
             </div>
@@ -460,142 +524,89 @@ export default function AddAnimalPage() {
   )
 }
 
-// ── Photo preview thumb ───────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
+
 function PhotoPreviewThumb({ photo, onRemove }) {
   const [src, setSrc] = React.useState(null)
-
   React.useEffect(() => {
-    if (photo.local_path) {
-      setSrc(`file://${photo.local_path}`)
-    } else if (photo.filename) {
-      window.api.photos.getPath(photo.filename).then(p => setSrc(`file://${p}`)).catch(() => {})
-    }
+    if (photo.local_path) setSrc(`file://${photo.local_path}`)
+    else if (photo.filename) window.api.photos.getPath(photo.filename).then(p => setSrc(`file://${p}`)).catch(() => {})
   }, [photo])
-
   return (
     <div className="photo-thumb" style={{ padding: 0, overflow: 'hidden' }}>
       {src
         ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        : <span style={{ fontSize: 11, color: 'var(--text-muted)', padding: 6, textAlign: 'center', wordBreak: 'break-all' }}>
-            {photo.original_name || photo.filename}
-          </span>
+        : <span style={{ fontSize: 11, color: 'var(--text-muted)', padding: 6, textAlign: 'center', wordBreak: 'break-all' }}>{photo.original_name || photo.filename}</span>
       }
       <button className="photo-remove" onClick={onRemove}>×</button>
     </div>
   )
 }
 
-// ── Selected morph row ────────────────────────────────────────────────────────
 function SelectedMorphRow({ morph, onRemove, onExpressionChange, onHetPctChange }) {
   const expressionOptions = morph.inheritance_type === 'recessive'
-    ? [
-        { value: 'visual',       label: 'Visual' },
-        { value: 'proven_het',   label: 'Proven Het' },
-        { value: 'het',          label: 'Het' },
-        { value: 'possible_het', label: 'Possible Het' },
-      ]
+    ? [{ value: 'visual', label: 'Visual' }, { value: 'proven_het', label: 'Proven Het' }, { value: 'het', label: 'Het' }, { value: 'possible_het', label: 'Possible Het' }]
     : morph.inheritance_type === 'co_dominant' || morph.inheritance_type === 'dominant'
-    ? [
-        { value: 'visual', label: 'Single copy (visual)' },
-        { value: 'super',  label: morph.super_form_name || 'Super / Homozygous' },
-      ]
-    : [
-        { value: 'visual', label: 'Expresses' },
-        { value: 'het',    label: 'Carries (non-visual)' },
-      ]
-
+    ? [{ value: 'visual', label: 'Single copy (visual)' }, { value: 'super', label: morph.super_form_name || 'Super / Homozygous' }]
+    : [{ value: 'visual', label: 'Expresses' }, { value: 'het', label: 'Carries (non-visual)' }]
   return (
     <div className="selected-morph-row">
-      {morph.has_health_concern === 1 && (
-        <span title="Health concern associated with this morph" style={{ color: 'var(--amber-text)', fontSize: 13 }}>⚠</span>
-      )}
+      {morph.has_health_concern === 1 && <span title="Health concern" style={{ color: 'var(--amber-text)', fontSize: 13 }}>⚠</span>}
       <span className="selected-morph-name">{morph.morph_name}</span>
-
-      <select
-        className="form-select"
-        style={{ fontSize: 11, padding: '3px 6px', height: 'auto', width: 'auto', flex: 1 }}
-        value={morph.expression}
-        onChange={e => onExpressionChange(e.target.value)}
-      >
-        {expressionOptions.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
+      <select className="form-select" style={{ fontSize: 11, padding: '3px 6px', height: 'auto', width: 'auto', flex: 1 }}
+        value={morph.expression} onChange={e => onExpressionChange(e.target.value)}>
+        {expressionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-
       {morph.expression === 'possible_het' && (
-        <select
-          className="form-select"
-          style={{ fontSize: 11, padding: '3px 6px', height: 'auto', width: 70 }}
-          value={morph.het_percent || 50}
-          onChange={e => onHetPctChange(Number(e.target.value))}
-        >
-          <option value={25}>25%</option>
-          <option value={50}>50%</option>
-          <option value={66}>66%</option>
-          <option value={75}>75%</option>
+        <select className="form-select" style={{ fontSize: 11, padding: '3px 6px', height: 'auto', width: 70 }}
+          value={morph.het_percent || 50} onChange={e => onHetPctChange(Number(e.target.value))}>
+          {[25, 50, 66, 75].map(p => <option key={p} value={p}>{p}%</option>)}
         </select>
       )}
-
       <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ padding: '2px 6px', color: 'var(--text-muted)' }}>×</button>
     </div>
   )
 }
 
-// ── Intake health issue row ───────────────────────────────────────────────────
 function IntakeIssueRow({ issue, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...issue, [k]: v })
   return (
     <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px', marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <input className="form-input" style={{ flex: 2, minWidth: 160 }}
-          value={issue.title} onChange={e => set('title', e.target.value)} placeholder="Condition / issue name *" />
+        <input className="form-input" style={{ flex: 2, minWidth: 160 }} value={issue.title} onChange={e => set('title', e.target.value)} placeholder="Condition / issue name *" />
         <select className="form-select" style={{ flex: 1, minWidth: 120 }} value={issue.category} onChange={e => set('category', e.target.value)}>
           {['general','injury','infection','parasite','respiratory','neurological','digestive','shed','other'].map(c =>
-            <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
-          )}
+            <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
         </select>
         <select className="form-select" style={{ flex: 1, minWidth: 110 }} value={issue.severity} onChange={e => set('severity', e.target.value)}>
-          <option value="minor">Minor</option>
-          <option value="moderate">Moderate</option>
-          <option value="serious">Serious</option>
-          <option value="critical">Critical</option>
+          {['minor','moderate','serious','critical'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
         <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ color: 'var(--text-muted)' }}>×</button>
       </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <input className="form-input" style={{ flex: 1, minWidth: 180 }}
-          value={issue.description} onChange={e => set('description', e.target.value)} placeholder="Description / symptoms" />
-        <input className="form-input" style={{ flex: 1, minWidth: 180 }}
-          value={issue.treatment} onChange={e => set('treatment', e.target.value)} placeholder="Treatment / action taken" />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input className="form-input" style={{ flex: 1 }} value={issue.description} onChange={e => set('description', e.target.value)} placeholder="Description / symptoms" />
+        <input className="form-input" style={{ flex: 1 }} value={issue.treatment} onChange={e => set('treatment', e.target.value)} placeholder="Treatment / action taken" />
       </div>
     </div>
   )
 }
 
-// ── Intake medication row ─────────────────────────────────────────────────────
 function IntakeMedRow({ med, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...med, [k]: v })
   return (
     <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px', marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <input className="form-input" style={{ flex: 2, minWidth: 160 }}
-          value={med.name} onChange={e => set('name', e.target.value)} placeholder="Medication name *" />
-        <input className="form-input" style={{ flex: 1, minWidth: 110 }}
-          value={med.dosage} onChange={e => set('dosage', e.target.value)} placeholder="Dosage" />
-        <input className="form-input" style={{ flex: 1, minWidth: 140 }}
-          value={med.frequency} onChange={e => set('frequency', e.target.value)} placeholder="Frequency" />
+        <input className="form-input" style={{ flex: 2, minWidth: 160 }} value={med.name} onChange={e => set('name', e.target.value)} placeholder="Medication name *" />
+        <input className="form-input" style={{ flex: 1, minWidth: 110 }} value={med.dosage} onChange={e => set('dosage', e.target.value)} placeholder="Dosage" />
+        <input className="form-input" style={{ flex: 1, minWidth: 140 }} value={med.frequency} onChange={e => set('frequency', e.target.value)} placeholder="Frequency" />
         <select className="form-select" style={{ minWidth: 110 }} value={med.route} onChange={e => set('route', e.target.value)}>
-          {['oral','topical','injection','nebulisation','other'].map(r =>
-            <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-          )}
+          {['oral','topical','injection','nebulisation','other'].map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
         </select>
         <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ color: 'var(--text-muted)' }}>×</button>
       </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <input className="form-input" style={{ flex: 1, minWidth: 160 }}
-          value={med.prescribed_by} onChange={e => set('prescribed_by', e.target.value)} placeholder="Prescribed by" />
-        <input className="form-input" style={{ flex: 1, minWidth: 160 }}
-          value={med.reason} onChange={e => set('reason', e.target.value)} placeholder="Reason / condition" />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input className="form-input" style={{ flex: 1 }} value={med.prescribed_by} onChange={e => set('prescribed_by', e.target.value)} placeholder="Prescribed by" />
+        <input className="form-input" style={{ flex: 1 }} value={med.reason} onChange={e => set('reason', e.target.value)} placeholder="Reason / condition" />
       </div>
     </div>
   )

@@ -37,6 +37,9 @@ function validateMorph(data) {
     category: normalizeText(data?.category),
     inheritance_type: inheritanceType,
     super_form_name: normalizeText(data?.super_form_name),
+    allele_group_id: normalizeText(data?.allele_group_id),
+    cross_allele_result: normalizeText(data?.cross_allele_result),
+    is_sex_linked: normalizeBool(data?.is_sex_linked),
     has_health_concern: normalizeBool(data?.has_health_concern),
     health_concern_desc: normalizeText(data?.health_concern_desc),
     description: normalizeText(data?.description),
@@ -102,12 +105,14 @@ function register(ipcMain) {
     db.prepare(`
       INSERT INTO morphs (
         id, species_id, name, gene_symbol, category, inheritance_type,
-        super_form_name, has_health_concern, health_concern_desc,
+        super_form_name, allele_group_id, cross_allele_result, is_sex_linked,
+        has_health_concern, health_concern_desc,
         description, also_known_as, discovered_year, is_combo,
         combo_components, sort_order, is_user_created
       ) VALUES (
         @id, @species_id, @name, @gene_symbol, @category, @inheritance_type,
-        @super_form_name, @has_health_concern, @health_concern_desc,
+        @super_form_name, @allele_group_id, @cross_allele_result, @is_sex_linked,
+        @has_health_concern, @health_concern_desc,
         @description, @also_known_as, @discovered_year, @is_combo,
         @combo_components, @sort_order, @is_user_created
       )

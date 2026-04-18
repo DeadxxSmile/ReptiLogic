@@ -1,0 +1,48 @@
+.animal-library-page {
+  padding: var(--page-padding);
+}
+
+.library-species-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.library-species-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.library-species-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.library-species-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.library-species-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.library-morph-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.library-morph-card {
+  padding: 12px 14px;
+  transition: border-color 0.15s;
+}
+.library-morph-card[style*="pointer"]:hover {
+  border-color: var(--accent);
+}

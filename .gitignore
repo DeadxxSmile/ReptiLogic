@@ -51,4 +51,24 @@ Desktop.ini
 *.sw?
 
 # ── Package lock (optional — remove this line if you want to commit it) ──
-# package-lock.json
+# package-lock.json# Dev folder — not for distribution
+dev/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Config sidecar
+reptilogic-config.json
+
+# Build output
+dist/
+build/
+.vite/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
