@@ -8,7 +8,11 @@
   <meta property="og:title" content="ReptiLogic">
   <meta property="og:description" content="Modern reptile collection, breeding, and genetics tracking.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="assets/logo/reptilogic-logo.png">
+  <meta property="og:image" content="https://www.reptilogic.com/assets/logo/reptilogic-logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ReptiLogic">
+  <meta name="twitter:description" content="Modern reptile collection, breeding, and genetics tracking.">
+  <meta name="twitter:image" content="https://www.reptilogic.com/assets/logo/reptilogic-logo.png">
   <meta name="theme-color" content="#0f0f0f">
   <link rel="icon" href="assets/logo/reptilogic-logo.png">
   <link rel="stylesheet" href="styles.css">
@@ -40,6 +44,7 @@
           </div>
           <div class="cta-subtext">Windows installer available now. Source code and release notes are always available on GitHub.</div>
           <div class="meta-row">
+            <span class="meta-pill meta-pill-version">v1.1.1</span>
             <span class="meta-pill">Windows desktop app</span>
             <span class="meta-pill">Dark + light mode</span>
             <span class="meta-pill">CSV import/export</span>
@@ -240,6 +245,7 @@
         <a href="https://github.com/DeadxxSmile/ReptiLogic" target="_blank" rel="noreferrer">GitHub</a>
         <a href="https://github.com/DeadxxSmile/reptilogic/releases/latest" target="_blank" rel="noreferrer">Latest Release</a>
         <a href="https://buymeacoffee.com/deadx_xsmile" target="_blank" rel="noreferrer">Support</a>
+        <a href="https://linktr.ee/deadx_xsmile" target="_blank" rel="noreferrer">Linktree</a>
       </div>
     </footer>
   </div>
@@ -250,7 +256,7 @@
     </form>
     <div class="lightbox-content">
       <h3 id="lightbox-title">Screenshot</h3>
-      <img id="lightbox-image" src="" alt="Expanded screenshot">
+      <img id="lightbox-image" src="" alt="">
     </div>
   </dialog>
 
@@ -373,14 +379,8 @@
     });
 
     lightbox.addEventListener('click', (event) => {
-      const rect = lightbox.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= event.clientY &&
-        event.clientY <= rect.top + rect.height &&
-        rect.left <= event.clientX &&
-        event.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) lightbox.close();
+      // Close when clicking the backdrop (outside the dialog content)
+      if (event.target === lightbox) lightbox.close();
     });
 
     buildDots();
