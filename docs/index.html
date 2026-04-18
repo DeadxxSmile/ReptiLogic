@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReptiLogic — Modern reptile collection, breeding, and genetics tracking</title>
-  <meta name="description" content="ReptiLogic is a desktop app for reptile breeders and keepers. Track your collection, manage breeding projects, log health and husbandry, run genetics calculations, and generate professional reports.">
+  <title>ReptiLogic — Reptile collection, breeding &amp; genetics tracking</title>
+  <meta name="description" content="ReptiLogic is a free desktop app for reptile breeders and keepers. Track your collection, manage breeding projects, log health records, run genetics calculations, and generate professional husbandry reports — all stored locally on your machine.">
   <meta property="og:title" content="ReptiLogic">
-  <meta property="og:description" content="Modern reptile collection, breeding, and genetics tracking.">
+  <meta property="og:description" content="Free desktop app for reptile breeders. Collection tracking, breeding management, and a genetics calculator with allele complex support.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://www.reptilogic.com/assets/logo/reptilogic-logo.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ReptiLogic">
-  <meta name="twitter:description" content="Modern reptile collection, breeding, and genetics tracking.">
+  <meta name="twitter:description" content="Free desktop app for reptile breeders. Collection tracking, breeding management, and a genetics calculator with allele complex support.">
   <meta name="twitter:image" content="https://www.reptilogic.com/assets/logo/reptilogic-logo.png">
   <meta name="theme-color" content="#0f0f0f">
   <link rel="icon" href="assets/logo/reptilogic-logo.png">
@@ -19,8 +19,10 @@
 </head>
 <body>
   <div class="site-shell">
+
+    <!-- ── Navigation ──────────────────────────────────────────── -->
     <header class="hero">
-      <nav class="topbar">
+      <nav class="topbar" id="topbar">
         <a class="brand" href="#top" aria-label="ReptiLogic home">
           <img src="assets/logo/reptilogic-logo.png" alt="ReptiLogic logo">
           <span>ReptiLogic</span>
@@ -29,165 +31,181 @@
           <a href="#features">Features</a>
           <a href="#screenshots">Screenshots</a>
           <a href="#download">Download</a>
-          <a class="btn btn-coffee btn-coffee-compact" href="https://buymeacoffee.com/deadx_xsmile" target="_blank" rel="noreferrer"><span class="coffee-emoji" aria-hidden="true">☕</span><span>Support</span></a>
+          <a class="btn btn-coffee btn-coffee-compact" href="https://buymeacoffee.com/deadx_xsmile" target="_blank" rel="noreferrer">
+            <span class="coffee-emoji" aria-hidden="true">☕</span>
+            <span>Support</span>
+          </a>
         </div>
       </nav>
 
+      <!-- ── Hero ────────────────────────────────────────────────── -->
       <div class="hero-grid" id="top">
         <div class="hero-copy">
-          <span class="eyebrow">Desktop app for breeders and keepers</span>
-          <h1>Collection tracking, breeding management, and genetics tools in one clean workspace.</h1>
-          <p class="hero-text">ReptiLogic gives breeders and keepers one focused desktop workspace for collection records, breeding projects, genetics planning, health history, and polished breeder-ready reporting. Built to stay fast, organized, and actually pleasant to use.</p>
+          <span class="eyebrow">Free desktop app for breeders and keepers</span>
+          <h1>Collection tracking, breeding management, and genetics tools — in one place.</h1>
+          <p class="hero-text">ReptiLogic is a free, open-source Windows app that keeps your entire reptile operation organised. Collection records, breeding projects, health logs, genetics calculations, and professional reports — all stored locally on your machine with no accounts or subscriptions required.</p>
           <div class="cta-row">
-            <a class="btn btn-primary" href="https://github.com/DeadxxSmile/reptilogic/releases/latest" target="_blank" rel="noreferrer">Download latest release</a>
+            <a class="btn btn-primary" href="https://github.com/DeadxxSmile/reptilogic/releases/latest" target="_blank" rel="noreferrer">Download for Windows</a>
             <a class="btn btn-secondary" href="https://github.com/DeadxxSmile/ReptiLogic" target="_blank" rel="noreferrer">View on GitHub</a>
           </div>
-          <div class="cta-subtext">Windows installer available now. Source code and release notes are always available on GitHub.</div>
+          <p class="cta-subtext">Free and open-source. No account required. Source code and release notes on GitHub.</p>
           <div class="meta-row">
             <span class="meta-pill meta-pill-version">v1.1.2</span>
-            <span class="meta-pill">Windows desktop app</span>
-            <span class="meta-pill">Dark + light mode</span>
-            <span class="meta-pill">CSV import/export</span>
-            <span class="meta-pill">Automatic backups</span>
+            <span class="meta-pill">Windows</span>
+            <span class="meta-pill">Dark &amp; light mode</span>
+            <span class="meta-pill">Local storage only</span>
+            <span class="meta-pill">GPL-3.0</span>
           </div>
         </div>
         <div class="hero-shot card-elevated">
-          <img src="assets/screenshots/ReptiLogic_Screenshot_Dashboard.png" alt="ReptiLogic dashboard screenshot">
+          <img src="assets/screenshots/ReptiLogic_Screenshot_Dashboard.png" alt="ReptiLogic dashboard showing collection summary and care reminders">
         </div>
       </div>
     </header>
 
     <main>
+
+      <!-- ── Features ────────────────────────────────────────────── -->
       <section class="section" id="features">
         <div class="section-heading">
-          <span class="eyebrow">Core workflow</span>
-          <h2>Everything you need to manage a modern reptile collection.</h2>
-          <p>Designed around the same dark, focused design language as the app itself, with fast access to the pieces breeders actually use day to day.</p>
+          <span class="eyebrow">Features</span>
+          <h2>Everything a reptile breeder actually needs.</h2>
+          <p>Built around the workflows breeders use every day — not a generic pet tracker with reptile branding bolted on.</p>
         </div>
 
         <div class="feature-grid">
           <article class="feature-card card">
             <h3>Collection</h3>
             <ul>
-              <li>Track animals with photos, morphs, weight, DOB, acquisition info, and notes</li>
-              <li>Auto-generated Animal IDs or enter your own</li>
-              <li>Grid and list views with filtering by species, sex, status, and search</li>
-              <li>Lineage builds automatically with clickable family tree support</li>
-              <li>Bulk import from CSV</li>
+              <li>Every animal in one place — photos, morphs, weight history, DOB, and notes</li>
+              <li>Auto-generated Animal IDs based on species, sex, and morphs, or bring your own system</li>
+              <li>Filter and search across the whole collection by species, sex, status, or name</li>
+              <li>Full lineage tracking with a clickable family tree going back as many generations as you have recorded</li>
+              <li>Import an existing spreadsheet via CSV to get started quickly</li>
             </ul>
           </article>
 
           <article class="feature-card card">
             <h3>Health</h3>
             <ul>
-              <li>Per-animal dashboard with weight trend chart</li>
-              <li>Log issues, medications, vet visits, treatment, and follow-up</li>
-              <li>Overdue reminders for feeding and weighing</li>
-              <li>History stays attached to the animal record over time</li>
+              <li>Dedicated health dashboard per animal with a visual weight trend chart</li>
+              <li>Log health issues, medications, and vet visits in one timeline</li>
+              <li>Configurable reminders when an animal is overdue for feeding or weighing</li>
+              <li>Complete treatment history attached to the animal record — nothing gets lost</li>
             </ul>
           </article>
 
           <article class="feature-card card">
             <h3>Breeding</h3>
             <ul>
-              <li>Full pairing lifecycle from Planned to Hatched or Born</li>
-              <li>Clutch logging with incubation details and offspring records</li>
-              <li>Add Babies Wizard for rapid hatchling entry</li>
-              <li>Suggested pairings based on genetics in your active collection</li>
+              <li>Track pairings through the full lifecycle — Planned, Active, Gravid, Laid, Hatched</li>
+              <li>Log clutch and litter details with incubation data and individual offspring records</li>
+              <li>Add Babies Wizard steps through each hatchling and links them to both parents automatically</li>
+              <li>Suggested pairings engine flags complementary genetics across your active collection</li>
             </ul>
           </article>
 
           <article class="feature-card card">
             <h3>Genetics Calculator</h3>
             <ul>
-              <li>Supports recessive, co-dominant, dominant, line-bred, and sex-linked traits</li>
-              <li>Allele complex support including BEL, Yellow Belly, 8-Ball, and more</li>
-              <li>Banana and Coral Glow male maker and female maker handling</li>
-              <li>Outcome cards show morph names, odds, expected counts, and sex ratio notes</li>
+              <li>Full Punnett square engine for recessive, co-dominant, dominant, line-bred, and sex-linked traits</li>
+              <li>Allele complex support — Lesser × Mojave correctly produces a BEL outcome, not two independent results</li>
+              <li>Banana and Coral Glow Male Maker and Female Maker sex ratios modelled accurately</li>
+              <li>Each outcome shows morph name, probability, expected clutch count range, and sex ratio notes</li>
             </ul>
           </article>
 
           <article class="feature-card card">
             <h3>Morph Library</h3>
             <ul>
-              <li>Built-in libraries for Ball Python, Western Hognose, Leopard Gecko, and Bearded Dragon</li>
-              <li>Health concern flags where appropriate</li>
-              <li>Add custom morphs and use them in the calculator automatically</li>
+              <li>Built-in databases for Ball Python, Western Hognose, Leopard Gecko, and Bearded Dragon</li>
+              <li>Health concern flags on morphs that carry known issues — Spider wobble, Enigma syndrome, Lemon Frost tumours, Silkback husbandry requirements, and more</li>
+              <li>Add custom morphs for any species and they become available in the calculator automatically</li>
             </ul>
           </article>
 
           <article class="feature-card card">
-            <h3>Backup, Export, Reports</h3>
+            <h3>Backup, Export &amp; Reports</h3>
             <ul>
-              <li>Automatic ZIP backups on open or close with configurable retention</li>
-              <li>One-click restore from saved backups</li>
-              <li>CSV export for collection, breeding records, and morphs</li>
-              <li>Professional husbandry reports with photo, pedigree, weights, and feeding history</li>
+              <li>Automatic compressed backups on launch or close — choose where they save and how many to keep</li>
+              <li>Restore any saved backup with one click</li>
+              <li>Export your collection, breeding records, and morph data to CSV at any time</li>
+              <li>Print a professional husbandry report for any animal — photo, pedigree, weight history, and feeding records included</li>
             </ul>
           </article>
         </div>
       </section>
 
+      <!-- ── First-run highlight ─────────────────────────────────── -->
       <section class="section highlight-band">
         <div class="highlight-grid highlight-grid-polished">
           <div class="highlight-copy">
-            <span class="eyebrow">First-run experience</span>
-            <h2>Easy setup from day one.</h2>
-            <p>The first-run wizard walks through database location and automatic backup setup so new installs can get moving quickly without extra config hunting.</p>
+            <span class="eyebrow">Getting started</span>
+            <h2>Up and running in minutes.</h2>
+            <p>A guided first-run wizard walks through database location, backup configuration, and app preferences — so there's nothing to figure out before you can start adding animals.</p>
           </div>
           <div class="stat-row stat-row-vertical">
             <div class="stat card">
               <strong>5-step</strong>
-              <span>first-run setup wizard</span>
+              <span>guided setup wizard</span>
             </div>
             <div class="stat card">
               <strong>130+</strong>
-              <span>ball python morphs included</span>
+              <span>ball python morphs built in</span>
             </div>
             <div class="stat card">
               <strong>1 click</strong>
-              <span>restore from backup</span>
+              <span>restore from any backup</span>
             </div>
           </div>
         </div>
 
         <div class="wizard-gallery card-elevated">
-          <button class="wizard-card" type="button" data-full="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen01.png" data-title="Welcome" data-description="Start the guided setup flow with a clean overview of what the app will configure for you.">
+          <button class="wizard-card" type="button"
+            data-full="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen01.png"
+            data-title="Welcome"
+            data-description="The setup wizard gives you a clear overview of what the app does before asking you to configure anything.">
             <img src="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen01.png" alt="First-run wizard welcome screen">
             <span>Welcome</span>
           </button>
-          <button class="wizard-card" type="button" data-full="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen02.png" data-title="Database Setup" data-description="Choose where your local database lives so backups and future restores stay predictable.">
+          <button class="wizard-card" type="button"
+            data-full="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen02.png"
+            data-title="Database Location"
+            data-description="Choose where your local database is stored — keep the default or point it at a synced folder like OneDrive for automatic off-site copies.">
             <img src="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen02.png" alt="First-run wizard database setup screen">
-            <span>Database setup</span>
+            <span>Database location</span>
           </button>
-          <button class="wizard-card" type="button" data-full="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen03.png" data-title="Automatic Backups" data-description="Turn on automatic backups right away so your collection data is protected from the start.">
-            <img src="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen03.png" alt="First-run wizard automatic backup setup screen">
+          <button class="wizard-card" type="button"
+            data-full="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen03.png"
+            data-title="Automatic Backups"
+            data-description="Enable automatic compressed backups right from the start so your collection data is protected before you add a single animal.">
+            <img src="assets/screenshots/ReptiLogic_Screenshot_FirstStartScreen03.png" alt="First-run wizard backup setup screen">
             <span>Automatic backups</span>
           </button>
         </div>
       </section>
 
+      <!-- ── Screenshots ─────────────────────────────────────────── -->
       <section class="section" id="screenshots">
         <div class="section-heading">
           <span class="eyebrow">Screenshots</span>
-          <h2>A closer look at the app.</h2>
-          <p>Take a smoother product tour with a rotating screenshot carousel. Use the arrows to move through each screen, or click the image to open it larger.</p>
+          <h2>See it in action.</h2>
+          <p>Step through each screen with the arrows, or click any image to open it full size.</p>
         </div>
 
         <div class="carousel card-elevated" aria-label="App screenshot carousel">
           <div class="carousel-stage">
             <button class="carousel-arrow carousel-arrow-left" type="button" id="carousel-prev" aria-label="Previous screenshot">&#10094;</button>
-            <button class="carousel-main" id="carousel-main" type="button" aria-label="Open screenshot larger">
+            <button class="carousel-main" id="carousel-main" type="button" aria-label="Open screenshot full size">
               <img id="carousel-image" src="assets/screenshots/ReptiLogic_Screenshot_Dashboard.png" alt="Dashboard screenshot">
             </button>
             <button class="carousel-arrow carousel-arrow-right" type="button" id="carousel-next" aria-label="Next screenshot">&#10095;</button>
           </div>
-
           <div class="carousel-meta">
             <div>
               <span class="eyebrow">Featured screen</span>
               <h3 id="carousel-title">Dashboard</h3>
-              <p id="carousel-description">Your quick overview for reminders, collection activity, and the big picture at a glance.</p>
+              <p id="carousel-description">A quick overview of your collection, overdue care reminders, and active breeding projects.</p>
             </div>
             <div class="carousel-status-row">
               <span class="carousel-count" id="carousel-count">1 / 9</span>
@@ -197,48 +215,55 @@
         </div>
       </section>
 
+      <!-- ── Download ────────────────────────────────────────────── -->
       <section class="section" id="download">
         <div class="download-panel card-elevated">
           <div>
             <span class="eyebrow">Download</span>
-            <h2>Grab the latest release and start tracking.</h2>
-            <p>Use the packaged Windows release for the fastest setup, or head to GitHub if you want the source, release notes, and project history.</p>
+            <h2>Free to download. Free forever.</h2>
+            <p>Grab the Windows installer for the quickest start, or head to GitHub for the source code, release notes, and full project history.</p>
             <div class="install-steps">
-              <div class="install-step"><strong>1</strong><span>Download the latest Windows release</span></div>
-              <div class="install-step"><strong>2</strong><span>Run the installer and complete first-run setup</span></div>
-              <div class="install-step"><strong>3</strong><span>Start adding animals, breeding records, and genetics data</span></div>
+              <div class="install-step"><strong>1</strong><span>Download the latest Windows installer from GitHub</span></div>
+              <div class="install-step"><strong>2</strong><span>Run the installer and follow the first-run setup wizard</span></div>
+              <div class="install-step"><strong>3</strong><span>Start adding animals, projects, and genetics data</span></div>
             </div>
           </div>
           <div class="download-actions download-actions-stack">
-            <a class="btn btn-primary" href="https://github.com/DeadxxSmile/reptilogic/releases/latest" target="_blank" rel="noreferrer">Latest release</a>
-            <a class="btn btn-secondary" href="https://github.com/DeadxxSmile/ReptiLogic" target="_blank" rel="noreferrer">GitHub project</a>
+            <a class="btn btn-primary" href="https://github.com/DeadxxSmile/reptilogic/releases/latest" target="_blank" rel="noreferrer">Download latest release</a>
+            <a class="btn btn-secondary" href="https://github.com/DeadxxSmile/ReptiLogic" target="_blank" rel="noreferrer">View on GitHub</a>
             <a class="btn btn-ghost" href="https://github.com/DeadxxSmile" target="_blank" rel="noreferrer">More projects</a>
           </div>
         </div>
       </section>
 
+      <!-- ── Support ─────────────────────────────────────────────── -->
       <section class="section support-section">
         <div class="support-card card-elevated">
           <div class="support-container">
             <div class="support-text">
               <span class="eyebrow">Support development</span>
-              <h2>If ReptiLogic helps your collection, you can help keep it growing.</h2>
-              <p>Tips are never required, but they do help support future updates, bug fixes, and feature work. If the app saves you time, helps you track projects cleanly, or keeps your records in one place, that support goes right back into improving it.</p>
+              <h2>ReptiLogic is free. Keeping it that way takes time.</h2>
+              <p>Tips aren't required, but they go directly toward future development — new features, bug fixes, and additional species support. If the app saves you time or helps you keep better records, any support is genuinely appreciated.</p>
             </div>
             <div class="support-action">
-              <a class="btn btn-coffee" href="https://buymeacoffee.com/deadx_xsmile" target="_blank" rel="noreferrer"><span class="coffee-emoji" aria-hidden="true">☕</span><span>Buy me a coffee</span></a>
+              <a class="btn btn-coffee" href="https://buymeacoffee.com/deadx_xsmile" target="_blank" rel="noreferrer">
+                <span class="coffee-emoji" aria-hidden="true">☕</span>
+                <span>Buy me a coffee</span>
+              </a>
             </div>
           </div>
         </div>
       </section>
+
     </main>
 
+    <!-- ── Footer ──────────────────────────────────────────────── -->
     <footer class="footer">
       <div class="footer-brand">
         <img src="assets/logo/reptilogic-logo.png" alt="ReptiLogic logo">
         <div>
           <strong>ReptiLogic</strong>
-          <span>Modern reptile collection, breeding, and genetics tracking.</span>
+          <span>Free reptile collection, breeding, and genetics tracking.</span>
         </div>
       </div>
       <div class="footer-links">
@@ -248,143 +273,103 @@
         <a href="https://linktr.ee/deadx_xsmile" target="_blank" rel="noreferrer">Linktree</a>
       </div>
     </footer>
-  </div>
 
+  </div><!-- /.site-shell -->
+
+  <!-- ── Lightbox ────────────────────────────────────────────── -->
   <dialog class="lightbox" id="lightbox">
     <form method="dialog" class="lightbox-close-wrap">
-      <button class="lightbox-close" aria-label="Close screenshot viewer">×</button>
+      <button class="lightbox-close" aria-label="Close screenshot">×</button>
     </form>
     <div class="lightbox-content">
-      <h3 id="lightbox-title">Screenshot</h3>
+      <h3 id="lightbox-title"></h3>
       <img id="lightbox-image" src="" alt="">
     </div>
   </dialog>
 
   <script>
-    const lightbox = document.getElementById('lightbox');
+    // ── Lightbox ─────────────────────────────────────────────────
+    const lightbox      = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightbox-image');
     const lightboxTitle = document.getElementById('lightbox-title');
-    const wizardCards = document.querySelectorAll('.wizard-card');
-    const carouselMain = document.getElementById('carousel-main');
-    const carouselImage = document.getElementById('carousel-image');
-    const carouselTitle = document.getElementById('carousel-title');
-    const carouselDescription = document.getElementById('carousel-description');
-    const carouselCount = document.getElementById('carousel-count');
-    const carouselDots = document.getElementById('carousel-dots');
-    const carouselPrev = document.getElementById('carousel-prev');
-    const carouselNext = document.getElementById('carousel-next');
-
-    const carouselItems = [
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_Dashboard.png',
-        title: 'Dashboard',
-        description: 'Your quick overview for reminders, collection activity, and the big picture at a glance.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_Collection.png',
-        title: 'Collection',
-        description: 'Browse the full collection with filters, sorting, and fast access to each animal record.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_Health.png',
-        title: 'Health',
-        description: 'Track weight history, medications, vet visits, and reminders from one organized health timeline.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_Breeding01.png',
-        title: 'Breeding Projects',
-        description: 'Manage pairings, status changes, project notes, and breeding plans without losing the timeline.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_Breeding02.png',
-        title: 'Clutches & Offspring',
-        description: 'Log clutch details, incubation data, and offspring records in a workflow built for breeders.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_GeneticsCalc.png',
-        title: 'Genetics Calculator',
-        description: 'Run pairing outcomes with support for recessive, co-dominant, dominant, line-bred, and sex-linked traits.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_AnimalLibrary.png',
-        title: 'Animal Library',
-        description: 'Review complete animal profiles with lineage, notes, and the details you actually need day to day.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_MorphLibrary.png',
-        title: 'Morph Library',
-        description: 'Use the built-in morph libraries or extend them with your own custom genetics data.'
-      },
-      {
-        src: 'assets/screenshots/ReptiLogic_Screenshot_Settings02.png',
-        title: 'Backup & Restore',
-        description: 'Keep your data protected with automatic backups and one-click restore support.'
-      }
-    ];
-
-    let currentCarouselIndex = 0;
 
     function openLightbox(src, title) {
       lightboxImage.src = src;
+      lightboxImage.alt = title;
       lightboxTitle.textContent = title;
       lightbox.showModal();
     }
 
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) lightbox.close();
+    });
+
+    // ── Wizard cards ──────────────────────────────────────────────
+    document.querySelectorAll('.wizard-card').forEach(card => {
+      card.addEventListener('click', () => openLightbox(card.dataset.full, card.dataset.title));
+    });
+
+    // ── Carousel ─────────────────────────────────────────────────
+    const carouselMain        = document.getElementById('carousel-main');
+    const carouselImage       = document.getElementById('carousel-image');
+    const carouselTitle       = document.getElementById('carousel-title');
+    const carouselDescription = document.getElementById('carousel-description');
+    const carouselCount       = document.getElementById('carousel-count');
+    const carouselDots        = document.getElementById('carousel-dots');
+
+    const slides = [
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_Dashboard.png',    title: 'Dashboard',            description: 'A quick overview of your collection, overdue care reminders, and active breeding projects.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_Collection.png',   title: 'Collection',           description: 'Browse your full collection with filters, search, and fast access to each animal record.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_Health.png',       title: 'Health',               description: 'Per-animal health history with weight trend charts, medication logs, and vet visit records.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_Breeding01.png',   title: 'Breeding Projects',    description: 'Manage pairings from planning through hatching with a full lifecycle status pipeline.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_Breeding02.png',   title: 'Clutches & Offspring', description: 'Log clutch details, incubation data, and individual hatchling records.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_GeneticsCalc.png', title: 'Genetics Calculator',  description: 'Full Punnett square engine with allele complex support, sex-linked traits, and clutch projections.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_AnimalLibrary.png',title: 'Animal Library',       description: 'Species reference with clutch sizes, incubation ranges, and live-birth flags.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_MorphLibrary.png', title: 'Morph Library',        description: 'Built-in morph databases with health concern flags and support for custom morphs.' },
+      { src: 'assets/screenshots/ReptiLogic_Screenshot_Settings02.png',   title: 'Backup & Restore',     description: 'Automatic compressed backups with configurable retention and one-click restore.' },
+    ];
+
+    let current = 0;
+
     function buildDots() {
       carouselDots.innerHTML = '';
-      carouselItems.forEach((item, index) => {
+      slides.forEach((_, i) => {
         const dot = document.createElement('button');
         dot.type = 'button';
         dot.className = 'carousel-dot';
-        dot.setAttribute('aria-label', `Go to ${item.title}`);
-        dot.addEventListener('click', () => updateCarousel(index));
+        dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+        dot.addEventListener('click', () => goTo(i));
         carouselDots.appendChild(dot);
       });
     }
 
-    function updateCarousel(index) {
-      currentCarouselIndex = (index + carouselItems.length) % carouselItems.length;
-      const item = carouselItems[currentCarouselIndex];
-      carouselImage.src = item.src;
-      carouselImage.alt = `${item.title} screenshot`;
-      carouselTitle.textContent = item.title;
-      carouselDescription.textContent = item.description;
-      carouselMain.dataset.full = item.src;
-      carouselMain.dataset.title = item.title;
-      carouselCount.textContent = `${currentCarouselIndex + 1} / ${carouselItems.length}`;
-      document.querySelectorAll('.carousel-dot').forEach((dot, dotIndex) => {
-        dot.classList.toggle('active', dotIndex === currentCarouselIndex);
+    function goTo(index) {
+      current = (index + slides.length) % slides.length;
+      const s = slides[current];
+      carouselImage.src             = s.src;
+      carouselImage.alt             = s.title + ' screenshot';
+      carouselTitle.textContent     = s.title;
+      carouselDescription.textContent = s.description;
+      carouselMain.dataset.full     = s.src;
+      carouselMain.dataset.title    = s.title;
+      carouselCount.textContent     = `${current + 1} / ${slides.length}`;
+      document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
       });
     }
 
-    wizardCards.forEach(card => {
-      card.addEventListener('click', () => {
-        openLightbox(card.dataset.full, card.dataset.title);
-      });
-    });
+    document.getElementById('carousel-prev').addEventListener('click', () => goTo(current - 1));
+    document.getElementById('carousel-next').addEventListener('click', () => goTo(current + 1));
+    carouselMain.addEventListener('click', () => openLightbox(slides[current].src, slides[current].title));
 
-    carouselPrev.addEventListener('click', () => updateCarousel(currentCarouselIndex - 1));
-    carouselNext.addEventListener('click', () => updateCarousel(currentCarouselIndex + 1));
-    carouselMain.addEventListener('click', () => {
-      openLightbox(carouselMain.dataset.full || carouselImage.src, carouselMain.dataset.title || carouselTitle.textContent);
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (lightbox.open) {
-        if (event.key === 'Escape') lightbox.close();
-        return;
-      }
-      if (event.key === 'ArrowLeft') updateCarousel(currentCarouselIndex - 1);
-      if (event.key === 'ArrowRight') updateCarousel(currentCarouselIndex + 1);
-    });
-
-    lightbox.addEventListener('click', (event) => {
-      // Close when clicking the backdrop (outside the dialog content)
-      if (event.target === lightbox) lightbox.close();
+    document.addEventListener('keydown', (e) => {
+      if (lightbox.open) return;
+      if (e.key === 'ArrowLeft')  goTo(current - 1);
+      if (e.key === 'ArrowRight') goTo(current + 1);
     });
 
     buildDots();
-    updateCarousel(0);
+    goTo(0);
   </script>
 </body>
 </html>
